@@ -51,8 +51,8 @@ else
   note_sums_url="$note_release_base/latest/download/checksums.txt"
 fi
 note_download "$note_sums_url" "$note_temp/checksums.txt"
-note_match=$(awk -v target="_${note_os}_${note_arch}\\.tar\\.gz" '
-  NF==2 && $2 ~ ("^note_[0-9]+\\.[0-9]+\\.[0-9]+" target "$") {
+note_match=$(awk -v target="_${note_os}_${note_arch}[.]tar[.]gz" '
+  NF==2 && $2 ~ ("^note_[0-9]+[.][0-9]+[.][0-9]+" target "$") {
     if(length($1)!=64 || $1 ~ /[^0-9a-fA-F]/) exit 1
     count++; match_line=$1 " " $2
   }

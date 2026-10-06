@@ -138,6 +138,15 @@ cp "$NOTE_INSTALL_FIXTURE/$file" "$destination"
 			t.Fatal(pin, string(b), e)
 		}
 	}
+	for _, badManifest := range [][]byte{
+		[]byte(strings.ReplaceAll(string(sums), ".tar.gz", "XtarXgz")),
+		append(bytes.Clone(sums), sums...),
+	} {
+		os.WriteFile(filepath.Join(fixture, "checksums.txt"), badManifest, 0600)
+		if b, e := install(destination, ""); e == nil || !strings.Contains(string(b), "no unique, valid checksum") {
+			t.Fatal("accepted invalid or duplicate archive name", string(b), e)
+		}
+	}
 	badSums := []byte(strings.Repeat("0", 64) + "  " + name + "\n")
 	os.WriteFile(filepath.Join(fixture, "checksums.txt"), badSums, 0600)
 	if b, e := install(destination, ""); e == nil {
