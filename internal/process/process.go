@@ -27,10 +27,37 @@ func ExitCode(err error) int {
 	return -1
 }
 
+type backgroundCommand struct {
+	*exec.Cmd
+	ctx context.Context
+}
+
+// finish removes descendants that ignored the group's graceful interrupt. The
+// command's WaitDelay has already allowed cleanup before a hard cancellation.
+func (c *backgroundCommand) finish() {
+	if c.ctx.Err() != nil && c.Process != nil {
+		_ = syscall.Kill(-c.Process.Pid, syscall.SIGKILL)
+	}
+}
+func (c *backgroundCommand) Run() error {
+	defer c.finish()
+	return c.Cmd.Run()
+}
+func (c *backgroundCommand) Output() ([]byte, error) {
+	defer c.finish()
+	return c.Cmd.Output()
+}
+func (c *backgroundCommand) CombinedOutput() ([]byte, error) {
+	defer c.finish()
+	return c.Cmd.CombinedOutput()
+}
+
 // Background gives noninteractive subprocesses a signal group, including hooks.
-func Background(ctx context.Context, argv []string, args ...string) *exec.Cmd {
+// Cancellation first sends SIGINT; after the bounded wait, any surviving group
+// members are killed so they cannot keep output pipes or repository locks alive.
+func Background(ctx context.Context, argv []string, args ...string) *backgroundCommand {
 	c := Command(ctx, argv, args...)
 	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	c.Cancel = func() error { return syscall.Kill(-c.Process.Pid, syscall.SIGINT) }
-	return c
+	return &backgroundCommand{Cmd: c, ctx: ctx}
 }

@@ -20,6 +20,9 @@ installed-binary preview validates the manifest independently of config and
 reads bounded source text. The fixed preview wrapper POSIX-quotes binary and
 manifest paths; only a numeric ID is substituted by fzf. `internal/process`
 provides direct argv execution, context cancellation, and bounded child waiting.
+Noninteractive search/Git commands have their own process group: cancellation
+first interrupts the group, then removes any surviving descendants after waiting.
+This also bounds hooks/wrappers that ignore SIGINT or keep output pipes open.
 `internal/errs` carries public exit codes with original errors.
 
 `internal/syncgit` handles dedicated-repository preflight, advisory locking,

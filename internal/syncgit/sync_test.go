@@ -433,13 +433,13 @@ func TestInstalledSignalsAndConcurrentSyncs(t *testing.T) {
 			if phase == "after commit" {
 				write(t, m.b, "local.md", "preserved\n")
 				hook := filepath.Join(m.b, ".git", "hooks", "post-commit")
-				os.WriteFile(hook, []byte("#!/bin/sh\nprintf ready > "+shellQuote(marker)+"\nsleep 30\n"), 0755)
+				os.WriteFile(hook, []byte("#!/bin/sh\ntrap '' INT\nprintf ready > "+shellQuote(marker)+"\nsleep 30\n"), 0755)
 			} else {
 				remoteCommit(t, m, "shared.md", "remote\n")
 				write(t, m.b, "shared.md", "local\n")
 				gitPath, _ := exec.LookPath("git")
 				wrapper := filepath.Join(filepath.Dir(m.b), "git-wrapper")
-				script := "#!/bin/sh\nif [ \"$1\" = rebase ]; then\n" + shellQuote(gitPath) + " \"$@\"\nstatus=$?\nprintf ready > " + shellQuote(marker) + "\nsleep 30\nexit $status\nfi\nexec " + shellQuote(gitPath) + " \"$@\"\n"
+				script := "#!/bin/sh\nif [ \"$1\" = rebase ]; then\ntrap '' INT\n" + shellQuote(gitPath) + " \"$@\"\nstatus=$?\nprintf ready > " + shellQuote(marker) + "\nsleep 30\nexit $status\nfi\nexec " + shellQuote(gitPath) + " \"$@\"\n"
 				os.WriteFile(wrapper, []byte(script), 0755)
 				text += "[tools]\ngit=[" + strconv.Quote(wrapper) + "]\n"
 			}
@@ -451,10 +451,13 @@ func TestInstalledSignalsAndConcurrentSyncs(t *testing.T) {
 			if e := cmd.Start(); e != nil {
 				t.Fatal(e)
 			}
+			done := make(chan error, 1)
+			go func() { done <- cmd.Wait() }()
+			reaped := false
 			defer func() {
-				if cmd.ProcessState == nil {
+				if !reaped {
 					cmd.Process.Kill()
-					cmd.Wait()
+					<-done
 				}
 			}()
 			waitFile(t, marker)
@@ -468,13 +471,14 @@ func TestInstalledSignalsAndConcurrentSyncs(t *testing.T) {
 			if e := cmd.Process.Signal(syscall.SIGINT); e != nil {
 				t.Fatal(e)
 			}
-			done := make(chan error, 1)
-			go func() { done <- cmd.Wait() }()
 			select {
 			case <-done:
+				reaped = true
 			case <-time.After(8 * time.Second):
 				cmd.Process.Kill()
-				t.Fatal("cancellation did not finish")
+				<-done
+				reaped = true
+				t.Fatalf("cancellation did not finish: %s", output.String())
 			}
 			if cmd.ProcessState.ExitCode() != 130 {
 				t.Fatalf("interrupt exit %d: %s", cmd.ProcessState.ExitCode(), output.String())

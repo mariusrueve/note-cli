@@ -14,3 +14,5 @@
 - Add locked four-platform Pixi development environments for Go 1.26/1.27,
   native terminal tests, coverage reports, dependency/security scans, pinned
   Actions, and gated tag-based release automation with build/dependency metadata.
+- Bound canceled search/Git subprocesses and clean up interrupt-resistant hooks
+  and wrappers without losing committed work or Git recovery state.
