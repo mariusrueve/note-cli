@@ -67,7 +67,7 @@ func TestInteractiveTerminal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cmd := exec.Command(binary, append([]string{"--config", cfg}, tc.args...)...)
 			cmd.Dir = dir
-			cmd.Env = append(os.Environ(), "TERM=xterm-256color", "NOTE_PTY_EDITOR=1", "XDG_CONFIG_HOME="+filepath.Join(dir, "xdg"))
+			cmd.Env = append(os.Environ(), "TERM=xterm-256color", "NOTE_PTY_EDITOR=1", "NOTE_NO_UPDATE_CHECK=1", "XDG_CONFIG_HOME="+filepath.Join(dir, "xdg"), "XDG_CACHE_HOME="+filepath.Join(dir, "cache"))
 			terminal, e := pty.StartWithSize(cmd, &pty.Winsize{Rows: 30, Cols: 140})
 			if e != nil {
 				t.Fatal(e)
