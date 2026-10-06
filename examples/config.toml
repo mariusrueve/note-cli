@@ -1,0 +1,22 @@
+# Copy this file, set root, or start with note init.
+schema_version = 1
+root = "~/Knowledge"
+editor = "hx"
+default_template = "default"
+# editor = ["code", "--wait", "--reuse-window"]
+# templates_dir = "./templates" # relative to this config file
+
+[tools]
+fzf = ["fzf"]
+rg = ["rg"]
+git = ["git"]
+
+[finder]
+height = "90%"
+preview_window = "right:60%:wrap"
+
+[search]
+case_sensitive = false
+
+[sync]
+commit_message = "notes: sync {timestamp}" # UTC RFC 3339 timestamp

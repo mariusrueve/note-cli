@@ -1,0 +1,54 @@
+[workspace]
+name = "note-cli"
+version = "0.1.0"
+description = "A small, safe Markdown knowledge-base CLI"
+channels = ["conda-forge"]
+platforms = [
+  { name = "macos-arm64", platform = "osx-arm64", macos = "13.0" },
+  { name = "macos-amd64", platform = "osx-64", macos = "13.0" },
+  { name = "linux-amd64", platform = "linux-64", glibc = "2.28" },
+  { name = "linux-arm64", platform = "linux-aarch64", glibc = "2.28" },
+]
+requires-pixi = ">=0.72.0"
+license = "MIT"
+license-file = "LICENSE"
+repository = "https://github.com/mariusrueve/note-cli"
+
+[dependencies]
+git = ">=2.49,<3"
+ripgrep = ">=14,<16"
+fzf = ">=0.60,<1"
+bash = ">=5.2,<6"
+fish = ">=4,<5"
+make = ">=4,<5"
+actionlint = ">=1.7.12,<2"
+
+[target.linux.dependencies]
+zsh = ">=5.9,<6"
+
+[feature.go127.dependencies]
+go = { version = "1.27.*", build = "cgo_*" }
+
+[feature.go126.dependencies]
+go = "1.26.*"
+"_go_select" = { version = "==2.3.0", build = "cgo" }
+
+[environments]
+default = ["go127"]
+go126 = ["go126"]
+
+[activation]
+scripts = ["scripts/dev-env.sh"]
+
+[tasks]
+fmt = "gofmt -w cmd internal"
+fmt-check = "make fmt-check"
+build = "make build"
+install = "make install"
+test = "go test -mod=readonly ./..."
+check = "bash scripts/check.sh"
+security = "bash scripts/security.sh"
+lint-workflows = "actionlint -color"
+snapshot = "go run -mod=readonly ./cmd/release --version snapshot"
+release = "go run -mod=readonly ./cmd/release"
+verify-release = "bash scripts/release-smoke.sh"
