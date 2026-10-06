@@ -259,6 +259,9 @@ func TestGitMatrix(t *testing.T) {
 	})
 	t.Run("missing identity before staging", func(t *testing.T) {
 		m := setup(t)
+		// Some CI hosts have a hostname that lets Git infer a valid identity.
+		// Explicitly require configured identity to exercise the failure path.
+		git(t, m.b, "config", "user.useConfigOnly", "true")
 		git(t, m.b, "config", "--unset", "user.name")
 		git(t, m.b, "config", "--unset", "user.email")
 		write(t, m.b, "local.md", "saved\n")
