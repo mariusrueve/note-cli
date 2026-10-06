@@ -32,7 +32,7 @@ type releaseInfo struct {
 	Targets []targetInfo `json:"targets"`
 }
 
-func archive(path, binary string) error {
+func archive(path, binary string, notices []byte) error {
 	f, e := os.Create(path)
 	if e != nil {
 		return e
@@ -49,6 +49,9 @@ func archive(path, binary string) error {
 			gz.Close()
 			f.Close()
 			return e
+		}
+		if entry.name == "LICENSE" {
+			b = append(append(b, '\n'), notices...)
 		}
 		if e = tw.WriteHeader(&tar.Header{Name: entry.name, Mode: entry.mode, Size: int64(len(b))}); e != nil {
 			tw.Close()
@@ -101,6 +104,11 @@ func run(version, output string) error {
 	}
 	defer os.RemoveAll(temp)
 	var sums strings.Builder
+	goRootBytes, e := exec.Command("go", "env", "GOROOT").Output()
+	if e != nil {
+		return e
+	}
+	goRoot := strings.TrimSpace(string(goRootBytes))
 	for _, target := range []struct{ os, arch string }{{"darwin", "arm64"}, {"darwin", "amd64"}, {"linux", "arm64"}, {"linux", "amd64"}} {
 		bin := filepath.Join(temp, "note")
 		cmd := exec.Command("go", "build", "-mod=readonly", "-buildvcs=false", "-trimpath", "-ldflags=-s -w -X main.version="+version+" -X main.commit="+sha+" -X main.distribution=archive", "-o", bin, "./cmd/note")
@@ -127,7 +135,11 @@ func run(version, output string) error {
 		info.Targets = append(info.Targets, targetInfo{target.os, target.arch, fmt.Sprintf("%x", sha256.Sum256(binaryBytes)), build})
 		name := "note_" + version + "_" + target.os + "_" + target.arch + ".tar.gz"
 		p := filepath.Join(dest, name)
-		if e = archive(p, bin); e != nil {
+		notices, e := thirdPartyNotices(build, goRoot, moduleDirectory)
+		if e != nil {
+			return e
+		}
+		if e = archive(p, bin, notices); e != nil {
 			return e
 		}
 		f, e := os.Open(p)

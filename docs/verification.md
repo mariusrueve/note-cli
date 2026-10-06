@@ -13,6 +13,10 @@ Native installer tests use real release binaries with local curl fixtures,
 including pinned/latest installation, reinstallation, invalid versions, failed
 checksums, and preservation of unrelated binaries. Final GitHub/release results
 will be recorded after the authorized publication gates complete.
+Release packaging also selects notices from the actual linked modules and Go
+standard library/vendor sources. Unit tests cover bundled notices, determinism,
+missing licenses, exclusion of unrelated data, and module replacement refusal;
+native archive smoke checks verify the bundled notices are present.
 
 Tested tools: Go 1.26.8 and 1.27.1, Git 2.54.0 (Apple Git-157), ripgrep 15.2.0,
 fzf 0.74.4, Helix 25.07.1, Fish 4.9.3, system Bash and Zsh. Temporary Go/fzf/Fish

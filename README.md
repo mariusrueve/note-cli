@@ -87,7 +87,7 @@ Portable archive instructions are in [releasing](docs/releasing.md).
 
 CI runs the same locked tasks on native macOS ARM64/Intel and Linux ARM64/AMD64,
 with both Go 1.26 and 1.27. Verified `vX.Y.Z` tags publish four portable archives,
-checksums, and their build/dependency record. Manual release dispatch validates a
+checksums, bundled dependency notices, and their build/dependency record. Manual release dispatch validates a
 version without publishing. Installer tests run with real native binaries and
 local download fixtures. Dependabot and weekly vulnerability scans maintain
 the dependency checks. See [development](CONTRIBUTING.md) and

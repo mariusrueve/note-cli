@@ -21,7 +21,7 @@ func TestArchive(t *testing.T) {
 	os.Chdir("../..")
 	defer os.Chdir(cwd)
 	p := filepath.Join(dir, "release.tar.gz")
-	if e := archive(p, binary); e != nil {
+	if e := archive(p, binary, []byte("Bundled license fixture\n")); e != nil {
 		t.Fatal(e)
 	}
 	f, e := os.Open(p)
@@ -48,6 +48,9 @@ func TestArchive(t *testing.T) {
 		if name == "note" && (string(b) != "binary" || h.Mode != 0755) {
 			t.Fatal(h, string(b))
 		}
+		if name == "LICENSE" && !bytes.Contains(b, []byte("Bundled license fixture")) {
+			t.Fatal("archive omitted dependency notices")
+		}
 	}
 	if _, e = tr.Next(); e != io.EOF {
 		t.Fatal("unexpected archive entry", e)
@@ -57,7 +60,7 @@ func TestArchive(t *testing.T) {
 		t.Fatal(e)
 	}
 	p2 := filepath.Join(dir, "again.tar.gz")
-	if e = archive(p2, binary); e != nil {
+	if e = archive(p2, binary, []byte("Bundled license fixture\n")); e != nil {
 		t.Fatal(e)
 	}
 	second, _ := os.ReadFile(p2)

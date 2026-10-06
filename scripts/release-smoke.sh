@@ -13,6 +13,9 @@ note_dist_dir="$(cd "$note_dist_dir" && pwd)"
   fi
   for archive in *.tar.gz; do
     test "$(tar tzf "$archive" | sort)" = "$(printf 'LICENSE\nREADME.md\nnote\n' | sort)"
+    tar xOzf "$archive" LICENSE | grep -F 'Bundled third-party notices' > /dev/null
+    tar xOzf "$archive" LICENSE | grep -F 'github.com/spf13/cobra' > /dev/null
+    tar xOzf "$archive" LICENSE | grep -F 'Go standard library (' > /dev/null
   done
 )
 case "$(uname -s)" in Darwin) note_os=darwin ;; Linux) note_os=linux ;; *) exit 1 ;; esac

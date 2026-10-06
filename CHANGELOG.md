@@ -7,6 +7,8 @@
 - Add a checksum-verified macOS/Linux release installer, explicit `self-update`
   and `--check`, daily cached interactive update hints with an opt-out, and
   protection of installations owned by source installers/package managers.
+- Bundle Go standard-library and linked dependency license/notice files in
+  release archives, and keep stable archive terminal tests offline and isolated.
 - Add `note` with XDG/TOML configuration, initialization, safe exclusive creation,
   ASCII basename slugging, literal legacy opening, and embedded/user templates.
 - Add shared ignore-aware discovery, numeric-ID fzf selection and source preview,
