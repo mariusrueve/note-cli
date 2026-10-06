@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased — v0.1.0
+## Unreleased
+
+## [0.1.0] - 2026-10-06
 
 - Add `note` with XDG/TOML configuration, initialization, safe exclusive creation,
   ASCII basename slugging, literal legacy opening, and embedded/user templates.

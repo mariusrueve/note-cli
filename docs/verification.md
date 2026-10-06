@@ -1,7 +1,7 @@
 # Verification record
 
 Implementation and local checks performed on 2026-10-06, macOS ARM64.
-This records executed checks separately from configured future CI runs.
+This records executed local checks and native GitHub Actions results.
 
 Tested tools: Go 1.26.8 and 1.27.1, Git 2.54.0 (Apple Git-157), ripgrep 15.2.0,
 fzf 0.74.4, Helix 25.07.1, Fish 4.9.3, system Bash and Zsh. Temporary Go/fzf/Fish
@@ -56,17 +56,34 @@ Completed checks:
   version/commit metadata. Local snapshots include uncommitted implementation
   changes and are development artifacts, not published releases.
 
-Pending external/native verification:
+GitHub Actions verification:
 
-- The GitHub Actions configuration covers Go 1.26.x/1.27.x on native macOS ARM64,
-  macOS Intel, Linux AMD64, and Linux ARM64. These remote jobs have not been run
-  in this local implementation session. No release was published.
-- Native execution on Intel macOS and both Linux architectures, plus interactive
-  Linux picker/editor/completion smoke checks, remain required before declaring
-  those release targets verified. Cross-compilation alone is not execution proof.
-- A v1 publication/tag/versioned remote-install workflow remains a separate action.
+- [Full passing CI run](https://github.com/mariusrueve/note-cli/actions/runs/37439390788)
+  for commit `2d7664c4e3fe3c99acf6f5d9d07f90af5507b6a7` completed on 2026-10-06.
+- All eight native jobs passed: macOS ARM64/Intel and Linux ARM64/AMD64, each
+  with locked Go 1.26.7 and 1.27.1. Each ran module verification/tidy, formatting,
+  vet, coverage, the full integration suite, native race checks, real-terminal
+  preview/editor/cancellation checks, three shell completions, and installation.
+- Vulnerability scanning and workflow lint passed. Reachable vulnerabilities:
+  none reported by the current Go vulnerability database. Detailed coverage
+  profiles and function reports are retained as workflow artifacts; the local
+  primary-toolchain total was 72.3% (subprocess coverage is not attributed back
+  to the parent test process).
+- All four cross-built archives passed SHA-256/content checks and native smoke
+  tests on their matching platform, including stamped version/commit, creation
+  with no runtime tools on PATH, and PTY tests of the actual archived executable.
+- CI exposed and resolved a hostname-dependent missing-identity fixture and a
+  cancellation edge case involving an interrupt-resistant descendant retaining
+  output pipes. The regression now deliberately ignores SIGINT and verifies
+  bounded cancellation, preserved commits, released locks, and Git recovery.
 
-The plan's cross-platform completion/preview and final all-platform acceptance
-checkboxes remain unchecked for these reasons. The CLI is ready for local source
-installation and macOS ARM64 use; CI and the manual recipes provide the remaining
-platform checks.
+The native completion, preview, installation, archive and final acceptance
+checkboxes in PLAN.md are complete. The source and verified archives are ready
+for the first 0.1.0 release. The Release workflow repeats every gate for versioned
+archives; manual dispatch validates without publishing, and a version tag
+publishes only after success. No release tag or published release was created
+in this setup session. See [releasing](releasing.md) for the exact procedure.
+
+Current checks and release rehearsals remain visible on the
+[Actions page](https://github.com/mariusrueve/note-cli/actions); use the run's
+commit SHA when associating a binary with its verification results.

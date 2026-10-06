@@ -740,7 +740,7 @@ Acceptance: two clones sync safely; local changes are committed before integrati
 ### Phase 6 — Delivery and documentation
 
 - [x] Complete the documents in section 14 and verify a fresh user's local installation/update path.
-- [ ] Activate macOS/Linux CI and finish installed-binary, native smoke, and cross-build checks.
+- [x] Activate macOS/Linux CI and finish installed-binary, native smoke, and cross-build checks.
 - [x] Verify portable archives, version metadata, all four targets, and checksums; add release automation only now.
 - [x] Record manual UI/completion checks and assess the v1 checklist.
 - [x] Before any publication, replace the module placeholder, fill copyright metadata, and verify release instructions.
@@ -770,12 +770,12 @@ Write the plan and repository documentation in English. Prompts, help, diagnosti
 
 Completion criteria:
 
-- [ ] Every requirement in section 1 is implemented, documented, and appropriately verified.
+- [x] Every requirement in section 1 is implemented, documented, and appropriately verified.
 - [x] No AI dependencies, metadata injection, or specialized project/meeting/journal commands are present.
 - [x] One-root configuration, templates, and knowledge data are distinct and portable.
 - [x] Existing notes are never overwritten by creation, and slug/path safety tests pass.
 - [x] The three search scopes, no-argument picker, and convenience lookup behave as specified.
-- [ ] Root-relative completion and right-side preview have been checked on both platforms.
+- [x] Root-relative completion and right-side preview have been checked on both platforms.
 - [x] The complete Git matrix and continue/abort recovery exercises pass.
 - [x] Installed binaries work outside the checkout, with embedded templates and preview and no language runtime requirement.
 - [x] All four release targets build; archive contents, version metadata, and checksums are verified.
