@@ -26,6 +26,13 @@ pixi run --locked release --version 0.1.0
 pixi run --locked verify-release work/releases/0.1.0 0.1.0
 ```
 
+The distribution also contains the versioned `install.sh` asset, covered by
+`checksums.txt`. Release binaries are stamped as archive builds; source and
+package builds default to source installation and cannot self-update. Only
+stable release versions support the installer, not snapshots. Native CI runs
+the installer with real binaries and local curl fixtures, covering latest and
+pinned versions, checksum failures, and preservation of unrelated installations.
+
 Every main push and pull request runs formatting, module verification/tidy, vet,
 coverage, real Git/rg/fzf/PTY integration, native race tests, completions, and
 ordinary installation on native macOS ARM64/Intel and Linux ARM64/AMD64 with both
@@ -75,5 +82,7 @@ For authenticated downloads, `gh release download v0.1.0 --repo
 mariusrueve/note-cli --pattern 'note_0.1.0_darwin_arm64.tar.gz' --pattern
 checksums.txt` fetches the archive and checksums. Substitute your target.
 Update by verifying and replacing the executable. Uninstall by removing that
-executable; config, templates, and knowledge files remain. There is no self-updater
-or distribution-package dependency.
+executable; config, templates, and knowledge files remain. For managed installs,
+use the [release installer and self-update command](installation.md). The public
+one-liner downloads `install.sh` from the latest published release; verify that
+the repository and assets are anonymously accessible after publication.

@@ -29,9 +29,20 @@ This also bounds hooks/wrappers that ignore SIGINT or keep output pipes open.
 commit-first fetch/rebase, collision protection, and explicit upstream push.
 Recovery is Git's commits/index/operation state; there is no stash journal.
 
+`internal/update` reads bounded public GitHub release metadata, compares stable
+numeric versions, verifies archive hashes/contents, and stages atomic executable
+replacement under a stable advisory lock. A matching installation receipt and
+binary hash identify installer-owned destinations. The CLI owns explicit update
+routing and the interactive-only, bounded, daily cached hint. Release builds
+carry an archive distribution stamp; source/package builds cannot self-replace.
+`scripts/install.sh` bootstraps from the same verified archives and delegates
+filesystem installation to their hidden `__install` command. Update state lives
+in the XDG cache and beside the executable, separate from knowledge/config data.
+
 There are no package-init filesystem operations, index, database, daemon, Markdown
 parser, general extension system, or dependency-injection container. Seams are
-limited to streams, terminal status, executable/home resolution, and sync clock.
+limited to streams, terminal status, executable/home resolution, release HTTP
+transport, and clocks.
 Tests use temporary data and real subprocesses. Add general features at the
 existing responsibility boundary and document public contract changes.
 
