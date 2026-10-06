@@ -806,6 +806,6 @@ Extend the existing responsibilities and document changes to CLI/config contract
 - [x] Add a public-release installation script with platform detection, pinned versions, checksums, and no privileged writes.
 - [x] Add explicit `note self-update` / `--check`, managed installation receipts, atomic replacement, and concurrent-update protection.
 - [x] Add silent, bounded, daily cached interactive hints with an opt-out and no automatic requests for scripts/completion.
-- [ ] Pass the full native CI matrix, security checks, and archive/installer verification for the final release commit.
-- [ ] Make the repository public and publish the first stable release through the gated tag workflow, as explicitly authorized by the user.
-- [ ] Verify the public installation URL and installed update commands without authentication.
+- [x] Pass the full native CI matrix, security checks, and archive/installer verification for the final release commit.
+- [x] Make the repository public and publish the first stable release through the gated tag workflow, as explicitly authorized by the user.
+- [x] Verify the public installation URL and installed update commands without authentication.
