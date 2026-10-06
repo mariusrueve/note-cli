@@ -22,6 +22,7 @@ import (
 	"github.com/mariusrueve/note-cli/internal/search"
 	"github.com/mariusrueve/note-cli/internal/syncgit"
 	"github.com/mariusrueve/note-cli/internal/templates"
+	"github.com/mariusrueve/note-cli/internal/update"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -33,6 +34,8 @@ type Options struct {
 	Home            func() (string, error)
 	Executable      string
 	Version, Commit string
+	Distribution    string
+	UpdateClient    *update.Client
 }
 type app struct {
 	Options
@@ -81,6 +84,7 @@ func New(o Options) *cobra.Command {
 	root.SetFlagErrorFunc(func(_ *cobra.Command, e error) error { return errs.Wrap(2, e) })
 	root.PersistentFlags().StringVar(&a.configPath, "config", "", "Configuration file (default: XDG_CONFIG_HOME/note/config.toml)")
 	root.CompletionOptions.DisableDefaultCmd = true
+	root.PersistentPostRun = func(cmd *cobra.Command, _ []string) { a.updateHint(cmd) }
 	initCmd := &cobra.Command{Use: "init", Short: "Create a root and configuration without initializing Git", Args: args(0, 0)}
 	var initRoot, editor string
 	initCmd.Flags().StringVar(&initRoot, "root", "~/Knowledge", "Knowledge root")
@@ -196,6 +200,7 @@ func New(o Options) *cobra.Command {
 		return syncgit.Run(cmd.Context(), c, syncgit.Options{In: a.In, Err: a.Err, Message: override})
 	}
 	root.AddCommand(initCmd, open, newCmd, tmpl, completion, preview, doctor, syncCmd)
+	root.AddCommand(a.updateCommand(), a.installCommand())
 	for _, kind := range []string{"find", "grep", "search", "recent"} {
 		root.AddCommand(a.resultCommand(kind))
 	}

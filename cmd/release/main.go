@@ -103,7 +103,7 @@ func run(version, output string) error {
 	var sums strings.Builder
 	for _, target := range []struct{ os, arch string }{{"darwin", "arm64"}, {"darwin", "amd64"}, {"linux", "arm64"}, {"linux", "amd64"}} {
 		bin := filepath.Join(temp, "note")
-		cmd := exec.Command("go", "build", "-mod=readonly", "-buildvcs=false", "-trimpath", "-ldflags=-s -w -X main.version="+version+" -X main.commit="+sha, "-o", bin, "./cmd/note")
+		cmd := exec.Command("go", "build", "-mod=readonly", "-buildvcs=false", "-trimpath", "-ldflags=-s -w -X main.version="+version+" -X main.commit="+sha+" -X main.distribution=archive", "-o", bin, "./cmd/note")
 		for _, v := range os.Environ() {
 			key, _, _ := strings.Cut(v, "=")
 			if key != "GOOS" && key != "GOARCH" && key != "CGO_ENABLED" {
@@ -155,6 +155,14 @@ func run(version, output string) error {
 		return e
 	}
 	fmt.Fprintf(&sums, "%x  build-info.json\n", sha256.Sum256(metadata))
+	installer, e := os.ReadFile("scripts/install.sh")
+	if e != nil {
+		return e
+	}
+	if e = os.WriteFile(filepath.Join(dest, "install.sh"), installer, 0644); e != nil {
+		return e
+	}
+	fmt.Fprintf(&sums, "%x  install.sh\n", sha256.Sum256(installer))
 	return os.WriteFile(filepath.Join(dest, "checksums.txt"), []byte(sums.String()), 0644)
 }
 func main() {

@@ -4,6 +4,9 @@
 
 ## [0.1.0] - 2026-10-06
 
+- Add a checksum-verified macOS/Linux release installer, explicit `self-update`
+  and `--check`, daily cached interactive update hints with an opt-out, and
+  protection of installations owned by source installers/package managers.
 - Add `note` with XDG/TOML configuration, initialization, safe exclusive creation,
   ASCII basename slugging, literal legacy opening, and embedded/user templates.
 - Add shared ignore-aware discovery, numeric-ID fzf selection and source preview,

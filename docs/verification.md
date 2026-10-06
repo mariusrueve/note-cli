@@ -3,6 +3,17 @@
 Implementation and local checks performed on 2026-10-06, macOS ARM64.
 This records executed local checks and native GitHub Actions results.
 
+The release installation extension adds unit tests for stable version comparison,
+bounded release metadata/downloads, checksum and archive validation, gzip trailer
+corruption, managed receipts, symlink/ownership guards, lock contention, failure
+preservation, cancellation, and daily/offline cache behavior. CLI tests verify
+config-independent manual checks and no automatic requests for headless, JSON,
+print, help, version, completion, development, disabled, or failed operations.
+Native installer tests use real release binaries with local curl fixtures,
+including pinned/latest installation, reinstallation, invalid versions, failed
+checksums, and preservation of unrelated binaries. Final GitHub/release results
+will be recorded after the authorized publication gates complete.
+
 Tested tools: Go 1.26.8 and 1.27.1, Git 2.54.0 (Apple Git-157), ripgrep 15.2.0,
 fzf 0.74.4, Helix 25.07.1, Fish 4.9.3, system Bash and Zsh. Temporary Go/fzf/Fish
 tooling and build/cache data live under ignored `work/`, outside the runtime design.

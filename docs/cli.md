@@ -21,6 +21,7 @@ additional filtering in fzf is fuzzy.
 | `note doctor` | Read-only effective config/tools/root/Git readiness/completion guidance |
 | `note completion SHELL` | Print Bash, Zsh, or Fish script |
 | `note sync` | Commit-first sync; `--message TEXT` literal nonempty override |
+| `note self-update` | Install the latest stable release for a release-installer installation; `--check` checks availability without replacing the executable |
 
 `--print` and `--json` are mutually exclusive. `--no-open` and `--open-existing`
 are mutually exclusive. Path arguments reject absolute paths, `.`, `..`, empty
@@ -43,6 +44,10 @@ Search/recent automatically print when stdin/stdout are not terminal streams.
 `--print`/`--json` bypass fzf. Pathless pickers require a terminal. Empty results
 launch no picker/editor. Data uses stdout; diagnostics/status/prompts use stderr.
 JSON never contains subprocess output. Human output escapes controls visibly.
+Release builds may emit cached update hints on stderr after successful
+interactive operations. Help, version, completion, scripts, and `--json`/`--print`
+are quiet. See [installation](installation.md) for network/cache behavior and
+`NOTE_NO_UPDATE_CHECK`.
 Use JSON for unambiguous filenames, including names containing line breaks.
 
 Printed find/search/recent output is one relative path per line; grep output is
