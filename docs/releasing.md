@@ -15,6 +15,10 @@ pixi run --locked verify-release work/releases/snapshot snapshot
 
 The builder creates darwin/arm64, darwin/amd64, linux/arm64, and linux/amd64
 `.tar.gz` archives containing executable `note`, README.md, and the MIT license.
+The archive's LICENSE also includes the Go standard library/vendor notices and
+license, notice, and patent files from the actual linked runtime modules.
+Missing module licenses or unpublished module replacements fail the release
+build. Test-only and development-tool modules are excluded.
 It writes `checksums.txt` and `build-info.json`, recording the actual commit,
 whether source is dirty, binary hashes, Go version/settings, and linked module
 versions/checksums. Archive metadata is deterministic. Snapshots can contain
