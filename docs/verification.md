@@ -11,12 +11,34 @@ config-independent manual checks and no automatic requests for headless, JSON,
 print, help, version, completion, development, disabled, or failed operations.
 Native installer tests use real release binaries with local curl fixtures,
 including pinned/latest installation, reinstallation, invalid versions, failed
-checksums, and preservation of unrelated binaries. Final GitHub/release results
-will be recorded after the authorized publication gates complete.
+checksums, and preservation of unrelated binaries. Stable archived-binary
+terminal fixtures explicitly disable automatic checks and use temporary caches.
 Release packaging also selects notices from the actual linked modules and Go
 standard library/vendor sources. Unit tests cover bundled notices, determinism,
 missing licenses, exclusion of unrelated data, and module replacement refusal;
 native archive smoke checks verify the bundled notices are present.
+
+Public release verification completed on 2026-10-06:
+
+- The repository is public and main retains enforced, strict `CI` protection.
+- [Main CI](https://github.com/mariusrueve/note-cli/actions/runs/37466480191)
+  passed for release commit `ca09cb0aaa046cbcf5383e2a87f3bcd491106a48`.
+- [Tag-triggered release CI/CD](https://github.com/mariusrueve/note-cli/actions/runs/37467780272)
+  passed every gate and published [v0.1.0](https://github.com/mariusrueve/note-cli/releases/tag/v0.1.0).
+  All eight native Go/platform jobs, security/workflow checks, the portable
+  build, and all four native archive/installer/terminal checks passed.
+- Anonymous downloads of all four archives, the installer, build record, and
+  checksums succeeded. Every published checksum verified. The clean local macOS
+  build and GitHub Linux build produced byte-identical checksum manifests for
+  all four archives, build record, and installer.
+- The documented latest-release one-liner installed into an isolated directory.
+  The installed binary reported version `0.1.0` and the exact release commit,
+  created configuration and a note with no runtime tools on PATH, and completed
+  `self-update --check` and `self-update` without authentication. Both correctly
+  reported the installed version as current. Replacement/failure paths are
+  exercised by the automated update tests; no later release existed to install.
+- These publication checks used only ignored workspace data under
+  `work/public-release/0.1.0`; no personal installation or knowledge data changed.
 
 Tested tools: Go 1.26.8 and 1.27.1, Git 2.54.0 (Apple Git-157), ripgrep 15.2.0,
 fzf 0.74.4, Helix 25.07.1, Fish 4.9.3, system Bash and Zsh. Temporary Go/fzf/Fish
@@ -93,11 +115,11 @@ GitHub Actions verification:
   bounded cancellation, preserved commits, released locks, and Git recovery.
 
 The native completion, preview, installation, archive and final acceptance
-checkboxes in PLAN.md are complete. The source and verified archives are ready
-for the first 0.1.0 release. The Release workflow repeats every gate for versioned
+checkboxes in PLAN.md are complete. The initial production-readiness checkpoint
+prepared the source and verified archives for the first 0.1.0 release. The Release workflow repeats every gate for versioned
 archives; manual dispatch validates without publishing, and a version tag
-publishes only after success. No release tag or published release was created
-in this setup session. See [releasing](releasing.md) for the exact procedure.
+publishes only after success. Publication was subsequently explicitly authorized
+and completed as recorded above. See [releasing](releasing.md) for the procedure.
 
 Current checks and release rehearsals remain visible on the
 [Actions page](https://github.com/mariusrueve/note-cli/actions); use the run's
