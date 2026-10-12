@@ -9,6 +9,14 @@ import (
 	"testing"
 )
 
+func TestUnknownKeyNamed(t *testing.T) {
+	f := filepath.Join(t.TempDir(), "config.toml")
+	os.WriteFile(f, []byte("root=\"kb\"\nbibliografy=\"x.bib\"\n[finder]\nhight=\"50%\"\n"), 0600)
+	_, e := Paths{Home: func() (string, error) { return t.TempDir(), nil }}.Load(f)
+	if e == nil || !strings.Contains(e.Error(), "unknown key bibliografy (line 2), finder.hight (line 4)") {
+		t.Fatal(e)
+	}
+}
 func TestConfig(t *testing.T) {
 	h := t.TempDir()
 	p := Paths{Home: func() (string, error) { return h, nil }}

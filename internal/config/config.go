@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -126,6 +127,15 @@ func (p Paths) Load(override string) (Config, error) {
 	}
 	var d disk
 	if e = toml.NewDecoder(bytes.NewReader(b)).DisallowUnknownFields().Decode(&d); e != nil {
+		var strict *toml.StrictMissingError
+		if errors.As(e, &strict) {
+			var keys []string
+			for _, de := range strict.Errors {
+				row, _ := de.Position()
+				keys = append(keys, fmt.Sprintf("%s (line %d)", strings.Join(de.Key(), "."), row))
+			}
+			return c, fmt.Errorf("config %s: unknown key %s; check the spelling, or update note if the key is newer than this version", f, strings.Join(keys, ", "))
+		}
 		return c, fmt.Errorf("config %s: %w", f, e)
 	}
 	base, e := p.Base()
