@@ -110,3 +110,30 @@ func TestDir(t *testing.T) {
 		}
 	}
 }
+func TestMove(t *testing.T) {
+	root := t.TempDir()
+	os.WriteFile(filepath.Join(root, "a.md"), []byte("a"), 0600)
+	os.WriteFile(filepath.Join(root, "b.md"), []byte("b"), 0600)
+	if e := Move(root, "a.md", "b.md"); errs.Code(e) != 4 {
+		t.Fatal(e)
+	}
+	if b, _ := os.ReadFile(filepath.Join(root, "b.md")); string(b) != "b" {
+		t.Fatal("destination overwritten")
+	}
+	if e := Move(root, "a.md", "deep/dir/c.md"); e != nil {
+		t.Fatal(e)
+	}
+	if _, e := os.Stat(filepath.Join(root, "a.md")); !os.IsNotExist(e) {
+		t.Fatal("source kept", e)
+	}
+	if b, _ := os.ReadFile(filepath.Join(root, "deep", "dir", "c.md")); string(b) != "a" {
+		t.Fatal(string(b))
+	}
+	os.Symlink(t.TempDir(), filepath.Join(root, "link"))
+	if e := Move(root, "b.md", "link/b.md"); e == nil {
+		t.Fatal("moved through a symlink")
+	}
+	if e := Move(root, "missing.md", "x.md"); e == nil {
+		t.Fatal("missing source")
+	}
+}

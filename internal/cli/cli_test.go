@@ -456,3 +456,45 @@ func TestDoctorDirectoriesAndBibliography(t *testing.T) {
 		t.Fatal(code, d)
 	}
 }
+func TestMoveCommand(t *testing.T) {
+	f := setup(t)
+	for p, s := range map[string]string{"inbox/2026-01-01-120000.md": "# Thought\n[ecfp](../chem/ecfp.md)\n", "chem/ecfp.md": "[thought](../inbox/2026-01-01-120000.md)\n", "taken.md": "keep\n", "ignored/note.md": "[t](../inbox/2026-01-01-120000.md)\n"} {
+		os.MkdirAll(filepath.Join(f.root, filepath.Dir(p)), 0755)
+		os.WriteFile(filepath.Join(f.root, p), []byte(s), 0600)
+	}
+	os.WriteFile(filepath.Join(f.root, ".ignore"), []byte("ignored/\n"), 0600)
+	code, out, _ := execute(t, f, false, "", "move", "inbox/2026-01-01-120000", "phd/Ideas/Good Thought", "--dry-run")
+	if code != 0 || out != "move inbox/2026-01-01-120000.md -> phd/Ideas/good-thought.md\nchem/ecfp.md:1: ../inbox/2026-01-01-120000.md -> ../phd/Ideas/good-thought.md\nphd/Ideas/good-thought.md:2: ../chem/ecfp.md -> ../../chem/ecfp.md\n" {
+		t.Fatalf("%d %q", code, out)
+	}
+	if _, e := os.Stat(filepath.Join(f.root, "inbox", "2026-01-01-120000.md")); e != nil {
+		t.Fatal("dry run moved the note", e)
+	}
+	for args, want := range map[string]int{"move missing x": 1, "move taken chem/ecfp": 4, "move taken TAKEN": 4, "move ../x y": 2, "move taken a//b": 2, "move taken": 2, "move taken /abs/": 2} {
+		if code, _, _ := execute(t, f, false, "", strings.Fields(args)...); code != want {
+			t.Fatal(args, code, want)
+		}
+	}
+	code, out, d := execute(t, f, false, "", "move", "inbox/2026-01-01-120000.md", "phd/Ideas/Good Thought", "--json")
+	if code != 0 || !strings.Contains(d, "Updated 2 links in 2 notes") || !strings.Contains(out, `"from":"inbox/2026-01-01-120000.md","to":"phd/Ideas/good-thought.md"`) {
+		t.Fatal(code, out, d)
+	}
+	b, _ := os.ReadFile(filepath.Join(f.root, "chem", "ecfp.md"))
+	if string(b) != "[thought](../phd/Ideas/good-thought.md)\n" {
+		t.Fatalf("%q", b)
+	}
+	b, _ = os.ReadFile(filepath.Join(f.root, "ignored", "note.md"))
+	if string(b) != "[t](../inbox/2026-01-01-120000.md)\n" {
+		t.Fatal("ignored note was rewritten")
+	}
+	// A trailing slash keeps the basename; deadlinks stays clean for discovered notes.
+	if code, _, _ = execute(t, f, false, "", "move", "phd/Ideas/good-thought.md", "archive/"); code != 0 {
+		t.Fatal(code)
+	}
+	if code, out, _ = execute(t, f, false, "", "deadlinks", "--print"); code != 0 || out != "" {
+		t.Fatal(code, out)
+	}
+	if b, _ = os.ReadFile(filepath.Join(f.root, "archive", "good-thought.md")); !strings.Contains(string(b), "[ecfp](../chem/ecfp.md)") {
+		t.Fatalf("%q", b)
+	}
+}

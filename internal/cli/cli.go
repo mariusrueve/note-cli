@@ -3,6 +3,7 @@ package cli
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -270,7 +271,7 @@ func New(o Options) *cobra.Command {
 	for _, kind := range []string{"find", "grep", "search", "recent"} {
 		root.AddCommand(a.resultCommand(kind))
 	}
-	root.AddCommand(a.linkCommand("backlinks"), a.linkCommand("deadlinks"))
+	root.AddCommand(a.linkCommand("backlinks"), a.linkCommand("deadlinks"), a.moveCommand())
 	return root
 }
 func args(min, max int) cobra.PositionalArgs {
@@ -794,6 +795,108 @@ func (a *app) completePaths(cmd *cobra.Command, args []string, prefix string) ([
 	return out, directive
 }
 
+// moveDestination derives NEW: a trailing slash keeps OLD's basename inside that
+// directory; otherwise the basename is normalized like note new.
+func moveDestination(oldRel, input string) (string, error) {
+	if strings.HasSuffix(input, "/") {
+		dir, e := notes.DirSyntax(input)
+		if e != nil {
+			return "", e
+		}
+		rel := dir + "/" + filepath.Base(oldRel)
+		return rel, notes.Syntax(rel, true)
+	}
+	return notes.NewPath(input)
+}
+
+// moveCommand renames a note and updates relative links that point to it or
+// that it contains. It never overwrites and leaves recovery to Git.
+func (a *app) moveCommand() *cobra.Command {
+	cmd := &cobra.Command{Use: "move OLD NEW", Short: "Move a note and update relative links to and from it", Args: args(2, 2), ValidArgsFunction: a.completeMove}
+	var dryRun, asJSON bool
+	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Show the move and link updates without changing files")
+	cmd.Flags().BoolVar(&asJSON, "json", false, "Print the move and link updates as a JSON object")
+	cmd.RunE = func(cmd *cobra.Command, v []string) error {
+		if e := notes.Syntax(v[0], false); e != nil {
+			return e
+		}
+		if strings.HasSuffix(v[1], "/") {
+			if _, e := notes.DirSyntax(v[1]); e != nil {
+				return e
+			}
+		} else if _, e := notes.NewPath(v[1]); e != nil {
+			return e
+		}
+		c, e := a.load()
+		if e != nil {
+			return e
+		}
+		old, exists, e := exact(c.Root, v[0])
+		if e != nil {
+			return e
+		}
+		if !exists {
+			return errs.New(1, "note does not exist: %s", search.Visible(v[0]))
+		}
+		to, e := moveDestination(old.Path, v[1])
+		if e != nil {
+			return e
+		}
+		if _, taken, e := notes.Collision(c.Root, to); e != nil {
+			return e
+		} else if taken {
+			return errs.New(4, "destination already exists: %s", search.Visible(to))
+		}
+		all, e := search.Discover(cmd.Context(), c, a.Err)
+		if e != nil {
+			return e
+		}
+		plan, e := links.PlanMove(c.Root, all, old.Path, to, a.Err)
+		if e != nil {
+			return e
+		}
+		if dryRun {
+			return a.printMove(plan, asJSON)
+		}
+		if e = plan.Unchanged(c.Root); e != nil {
+			return e
+		}
+		if e = notes.Move(c.Root, old.Path, to); e != nil {
+			return e
+		}
+		fmt.Fprintf(a.Err, "Moved %s -> %s\n", search.Visible(old.Path), search.Visible(to))
+		done, e := plan.Apply(c.Root)
+		if e != nil {
+			fmt.Fprintf(a.Err, "Updated links in: %s\n", search.Visible(strings.Join(done, ", ")))
+			return fmt.Errorf("%w; the note was moved, remaining links were not updated; inspect with git diff and note deadlinks", e)
+		}
+		fmt.Fprintf(a.Err, "Updated %d links in %d notes\n", len(plan.Edits), len(done))
+		if asJSON {
+			return a.printMove(plan, true)
+		}
+		return nil
+	}
+	return cmd
+}
+func (a *app) printMove(plan links.Plan, asJSON bool) error {
+	if asJSON {
+		return json.NewEncoder(a.Out).Encode(plan)
+	}
+	fmt.Fprintf(a.Out, "move %s -> %s\n", search.Visible(plan.From), search.Visible(plan.To))
+	for _, e := range plan.Edits {
+		fmt.Fprintf(a.Out, "%s:%d: %s -> %s\n", search.Visible(e.Path), e.Line, search.Visible(e.Old), search.Visible(e.New))
+	}
+	return nil
+}
+func (a *app) completeMove(cmd *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+	if len(args) == 0 {
+		return a.completePaths(cmd, nil, prefix)
+	}
+	if len(args) == 1 {
+		return a.completeDirs(cmd, nil, prefix)
+	}
+	return nil, cobra.ShellCompDirectiveNoFileComp
+}
 func citekey(key string) error {
 	if key == "" || strings.IndexFunc(key, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
 		return errs.New(2, "citation key must be nonempty without spaces or control characters")

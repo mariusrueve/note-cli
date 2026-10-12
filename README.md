@@ -63,6 +63,7 @@ note search --in phd fingerprint  # only notes below phd/
 note recent --limit 20
 note backlinks chem/ecfp   # notes linking here
 note deadlinks             # broken local links; exit 1 if any
+note move inbox/idea phd/ideas/  # file a note and update links to and from it
 note search fingerprint --json
 note templates
 note doctor

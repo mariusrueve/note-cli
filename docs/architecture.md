@@ -30,6 +30,9 @@ at invocation time for backlinks and dead-link checks. It is a deliberately smal
 line scanner (inline links/images, reference definitions, fenced code, inline code
 spans), not a general Markdown parser, and keeps no index. Dead-link checks walk
 targets without following symlinks and compare exact directory-entry names.
+Extracted links carry byte offsets, so `note move` plans exact target
+replacements, rechecks file contents before acting, renames with a
+no-overwrite hard link, and rewrites files through temporary files.
 
 `internal/bib` reads BibTeX/BibLaTeX files read-only: braced, quoted, and bare
 values with `#` concatenation, skipping `@comment`/`@string`/`@preamble`. It turns

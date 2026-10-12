@@ -34,7 +34,9 @@ fails doctor like a missing tool.
   the file current. Keys are exact and case-sensitive, so an unknown key exits 1;
   use Tab completion or `note cite` without a key to pick.
 - Broken links after moving or renaming notes by hand: run `note deadlinks` and
-  fix the reported `path:line` targets. `case differs` works on macOS but fails on
+  fix the reported `path:line` targets. Prefer `note move OLD NEW --dry-run`,
+  then `note move OLD NEW`, which updates links for you. Ignored notes and
+  case-only renames are outside its scope. `case differs` works on macOS but fails on
   case-sensitive Linux servers.
 - Sync preflight failure: use a dedicated top-level checkout, committed local
   branch, and exactly one upstream. Configure identity before making local

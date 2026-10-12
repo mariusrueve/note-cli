@@ -18,6 +18,7 @@ additional filtering in fzf is fuzzy.
 | `note search QUERY` | Path/content union, one result per note with first content line; same options |
 | `note backlinks PATH` | Notes linking to an existing note, one result per link; `--print`, `--json`, `--in DIR` |
 | `note deadlinks` | Local links whose target is missing; exit 1 when any exist; `--print`, `--json`, `--in DIR` |
+| `note move OLD NEW` | Move a note and update relative links to and from it; `--dry-run`, `--json` |
 | `note recent` | Newest mtime first, path order for ties; `--limit N` (20, positive), `--print`, `--json`, `--in DIR` |
 | `note templates` | Effective templates, sources, embedded overrides, default |
 | `note init` | Create config/root; `--root PATH` (`~/Knowledge`), `--editor EXECUTABLE` (`hx`) |
@@ -70,6 +71,34 @@ with `--print`/`--json`, broken links exit 1 and none exit 0 (`[]` for JSON,
 `No broken links.` on stderr otherwise), so it suits scripts before `note sync`.
 In a terminal, broken links open the picker at the link. Both commands report
 `match_kinds` as `["link"]`.
+
+`note move OLD NEW` takes OLD as a literal existing note like `open`. NEW is
+root-relative: a trailing `/` moves the note into that directory with its
+basename, otherwise the basename is normalized like `note new`, so
+`note move inbox/2026-10-12-143005 phd/ideas/Binding Assay` creates
+`phd/ideas/binding-assay.md`. Missing parent directories are created. The move
+never replaces anything: an existing destination, including a case-insensitive
+match, exits 4 (case-only renames are therefore unsupported). Missing OLD exits
+1; invalid paths exit 2; symlinked or nested-repository paths and IO failures
+exit 3.
+
+It rewrites links in every discovered note whose target resolves to OLD, and the
+moved note's own relative links so they keep pointing at the same files. Rewrites
+keep each link's form: root-style `/…` targets stay root-style, `<…>` targets stay
+in angle form, fragments and queries are kept, and spaces outside angle form are
+written as `%20`. Links in code, ignored notes, URLs, and anchor-only links are not
+touched; check with `note deadlinks` afterwards. `--dry-run` prints
+`move OLD -> NEW` and one `path:line: old -> new` line per rewrite to stdout and
+changes nothing; `--json` prints `{"from","to","edits":[{"path","line","old","new"}]}`.
+
+Before moving, every file to rewrite is reread; if any changed since planning,
+nothing moves (exit 3). The note is renamed by hard-linking the new name and
+removing the old one, so both must be on one filesystem that supports hard links.
+Each rewritten note is replaced atomically through a temporary file in its
+directory and keeps its permissions; its modification time changes. If a rewrite
+fails after the move, the error lists the notes already updated (exit 3). There
+are no Git operations: review with `git diff`, recover with Git, and record with
+`note sync`.
 
 `--in DIR` limits the picker, `note QUERY`, find/grep/search, and recent to
 discoverable notes below a root-relative directory, e.g. `note search --in phd
