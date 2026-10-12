@@ -18,6 +18,9 @@ required, `schema_version` defaults to 1, and unknown keys/types or unsupported
 versions are errors. Defaults are `hx`, template `default`, `fzf`, `rg`, `git`,
 finder height `90%`, preview `right:60%:wrap`, case-insensitive search, and commit
 message `notes: sync {timestamp}`. Explicit `false` overrides settings correctly.
+`inbox_dir` (default `inbox`) is the root-relative directory where `note new`
+without PATH creates capture notes; one trailing slash is allowed, and absolute
+paths, `..`, `.git`, and control characters are errors. It is created on first use.
 Precedence is defaults, TOML, applicable CLI flags. `EDITOR` and `VISUAL` are not
 used. Executable availability is checked only when needed by the command.
 

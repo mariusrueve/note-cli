@@ -49,6 +49,7 @@ or module cache. The module is `github.com/mariusrueve/note-cli`.
 ```sh
 note init --root ~/Knowledge
 note new docker/networking
+note new --title "Idea about ECFP"  # no path needed: inbox/idea-about-ecfp.md
 note new cheminformatics/ecfp --template concept --title ECFP
 note new phd/lab/binding-assay --template experiment  # also paper, meeting, idea
 note open docker/networking

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/mariusrueve/note-cli/internal/notes"
 	"github.com/pelletier/go-toml/v2"
 )
 
@@ -33,6 +34,7 @@ type Config struct {
 	Editor          []string `toml:"-"`
 	DefaultTemplate string   `toml:"default_template"`
 	TemplatesDir    string   `toml:"templates_dir"`
+	InboxDir        string   `toml:"inbox_dir"`
 	Tools           Tools    `toml:"tools"`
 	Finder          Finder   `toml:"finder"`
 	Search          Search   `toml:"search"`
@@ -45,6 +47,7 @@ type disk struct {
 	Editor          any     `toml:"editor"`
 	DefaultTemplate *string `toml:"default_template"`
 	TemplatesDir    *string `toml:"templates_dir"`
+	InboxDir        *string `toml:"inbox_dir"`
 	Tools           struct {
 		FZF *[]string `toml:"fzf"`
 		RG  *[]string `toml:"rg"`
@@ -125,7 +128,7 @@ func (p Paths) Load(override string) (Config, error) {
 	if e != nil {
 		return c, e
 	}
-	c = Config{SchemaVersion: 1, Editor: []string{"hx"}, DefaultTemplate: "default", TemplatesDir: filepath.Join(base, "templates"), Tools: Tools{[]string{"fzf"}, []string{"rg"}, []string{"git"}}, Finder: Finder{"90%", "right:60%:wrap"}, Sync: Sync{"notes: sync {timestamp}"}, File: f, Search: d.Search}
+	c = Config{SchemaVersion: 1, Editor: []string{"hx"}, DefaultTemplate: "default", TemplatesDir: filepath.Join(base, "templates"), InboxDir: "inbox", Tools: Tools{[]string{"fzf"}, []string{"rg"}, []string{"git"}}, Finder: Finder{"90%", "right:60%:wrap"}, Sync: Sync{"notes: sync {timestamp}"}, File: f, Search: d.Search}
 	if d.SchemaVersion != nil {
 		c.SchemaVersion = *d.SchemaVersion
 	}
@@ -173,6 +176,12 @@ func (p Paths) Load(override string) (Config, error) {
 		if e != nil {
 			return c, e
 		}
+	}
+	if d.InboxDir != nil {
+		c.InboxDir = strings.TrimSuffix(*d.InboxDir, "/")
+	}
+	if notes.Syntax(c.InboxDir, true) != nil {
+		return c, fmt.Errorf("inbox_dir must be a root-relative directory without .., .git, or control characters")
 	}
 	if d.Tools.FZF != nil {
 		c.Tools.FZF = *d.Tools.FZF
