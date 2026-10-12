@@ -60,6 +60,8 @@ note grep "extended connectivity" # contents only
 note search fingerprint    # both, once per note
 note search --in phd fingerprint  # only notes below phd/
 note recent --limit 20
+note backlinks chem/ecfp   # notes linking here
+note deadlinks             # broken local links; exit 1 if any
 note search fingerprint --json
 note templates
 note doctor

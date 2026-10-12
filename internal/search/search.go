@@ -27,6 +27,7 @@ type Result struct {
 	Line       *int     `json:"line"`
 	Snippet    *string  `json:"snippet"`
 	MtimeNS    *int64   `json:"mtime_ns,omitempty"`
+	Problem    *string  `json:"problem,omitempty"`
 }
 
 func Listing(path string) Result { return Result{Path: path, MatchKinds: []string{}} }
@@ -278,8 +279,10 @@ func Print(w io.Writer, kind string, results []Result, asJSON bool) error {
 	b := bufio.NewWriter(w)
 	for _, r := range results {
 		var e error
-		if kind == "grep" {
+		if kind == "grep" || kind == "backlinks" {
 			_, e = fmt.Fprintf(b, "%s:%d:%s\n", Visible(r.Path), *r.Line, Visible(*r.Snippet))
+		} else if kind == "deadlinks" {
+			_, e = fmt.Fprintf(b, "%s:%d:%s (%s)\n", Visible(r.Path), *r.Line, Visible(*r.Snippet), *r.Problem)
 		} else {
 			_, e = fmt.Fprintln(b, Visible(r.Path))
 		}
