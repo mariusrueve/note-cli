@@ -61,7 +61,10 @@ macOS ARM64, `pixi install --locked`, both environments' `check`, `security`, an
 The Go 1.26 compatibility environment stays on 1.26.7, the newest conda-forge
 1.26 build at that date; govulncheck still reports these fixes (released in
 Go 1.26.9) as reachable there. Release builds and the CI security job use the
-default Go 1.27 environment. CI has not yet run on this lock.
+default Go 1.27 environment. The
+[CI run](https://github.com/mariusrueve/note-cli/actions/runs/38297227124) for
+commit `ab5bb7191ecc516a63d1d323a06fc05805044d97` passed on 2026-10-12 with
+Pixi 0.72.0, including all native jobs, vulnerability scanning, and workflow lint.
 
 Completed checks:
 
