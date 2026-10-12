@@ -147,7 +147,7 @@ func New(o Options) *cobra.Command {
 		return a.edit(cmd.Context(), c, r)
 	}}
 	a.scopeFlag(open, &openIn)
-	newCmd := &cobra.Command{Use: "new PATH", Short: "Create a note exclusively and open it", Args: args(1, 1), ValidArgsFunction: a.completePaths}
+	newCmd := &cobra.Command{Use: "new [PATH]", Short: "Create a note exclusively and open it; without PATH, in the inbox", Args: args(0, 1), ValidArgsFunction: a.completePaths}
 	var template, title string
 	var noOpen, openExisting bool
 	newCmd.Flags().StringVar(&template, "template", "", "Template name")
@@ -161,14 +161,22 @@ func New(o Options) *cobra.Command {
 		if noOpen && openExisting {
 			return errs.New(2, "--no-open and --open-existing are mutually exclusive")
 		}
-		if _, e := notes.NewPath(v[0]); e != nil {
-			return e
+		if len(v) > 0 {
+			if _, e := notes.NewPath(v[0]); e != nil {
+				return e
+			}
 		}
 		c, e := a.load()
 		if e != nil {
 			return e
 		}
-		return a.create(cmd.Context(), c, v[0], template, title, cmd.Flags().Changed("title"), noOpen, openExisting)
+		explicitTitle := cmd.Flags().Changed("title")
+		if len(v) == 0 {
+			var input string
+			input, title, explicitTitle = a.inboxPath(c, title, explicitTitle)
+			v = append(v, input)
+		}
+		return a.create(cmd.Context(), c, v[0], template, title, explicitTitle, noOpen, openExisting)
 	}
 	newCmd.RegisterFlagCompletionFunc("template", a.completeTemplates)
 	tmpl := &cobra.Command{Use: "templates", Short: "List templates, sources, overrides, and the default", Args: args(0, 0), RunE: func(_ *cobra.Command, _ []string) error {
@@ -365,6 +373,22 @@ func (a *app) existing(ctx context.Context, c config.Config, rel string, noOpen,
 		}
 	}
 	return a.edit(ctx, c, search.Listing(rel))
+}
+
+// inboxPath names a capture note: the title's slug, or a local timestamp when
+// there is no title or it has no ASCII letters or digits.
+func (a *app) inboxPath(c config.Config, title string, explicitTitle bool) (string, string, bool) {
+	if explicitTitle {
+		input := c.InboxDir + "/" + strings.ReplaceAll(title, "/", " ")
+		if _, e := notes.NewPath(input); e == nil {
+			return input, title, true
+		}
+	}
+	now := a.now()
+	if !explicitTitle {
+		title = now.Format(time.DateTime)
+	}
+	return c.InboxDir + "/" + now.Format("2006-01-02-150405"), title, true
 }
 func (a *app) create(ctx context.Context, c config.Config, input, template, title string, explicitTitle, noOpen, authorized bool) error {
 	rel, e := notes.NewPath(input)

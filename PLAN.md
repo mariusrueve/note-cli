@@ -60,13 +60,14 @@ Ordered by value and effort; implement one item per change.
 
 ### 3. Inbox default for capture
 
-- [ ] `note new` without PATH creates `<inbox_dir>/<slug(--title)>.md`, or
-  `<inbox_dir>/YYYY-MM-DD-HHMMSS.md` (local time) without `--title`.
-- [ ] New config key `inbox_dir` (default `"inbox"`, root-relative, validated like
+- [x] `note new` without PATH creates `<inbox_dir>/<slug(--title)>.md`, or
+  `<inbox_dir>/YYYY-MM-DD-HHMMSS.md` (local time) without `--title` or when the
+  title has no ASCII letters or digits; `/` in titles never adds folders.
+- [x] New config key `inbox_dir` (default `"inbox"`, root-relative, validated like
   note paths); documented in `docs/configuration.md` and `examples/config.toml`.
-- [ ] Exclusive creation and existing-file rules (exit 4, `--open-existing`) apply
+- [x] Exclusive creation and existing-file rules (exit 4, `--open-existing`) apply
   unchanged; nothing is ever overwritten.
-- [ ] Filing remains manual (`git mv`/`mv`); rename with link updates stays later work.
+- [x] Filing remains manual (`git mv`/`mv`); rename with link updates stays later work.
 
 ### 4. Backlinks and dead links
 

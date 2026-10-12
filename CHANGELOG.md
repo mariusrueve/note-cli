@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `note new` without PATH creates a capture note in the new `inbox_dir` setting
+  (default `inbox`), named after `--title` or the local timestamp.
 - Add `--in DIR` to the picker, `note QUERY`, `open`, `find`, `grep`, `search`,
   and `recent` to limit results to notes below a root-relative directory.
   Results stay root-relative; completion suggests directories.

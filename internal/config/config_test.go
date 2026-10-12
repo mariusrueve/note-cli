@@ -46,6 +46,11 @@ func TestConfig(t *testing.T) {
 		{"wrong tool", "root=\"kb\"\n[tools]\nrg=\"rg\"", true},
 		{"empty default", "root=\"kb\"\ndefault_template=\"\"", true},
 		{"relative templates", "root=\"kb\"\ntemplates_dir=\"../templates\"", false},
+		{"inbox", "root=\"kb\"\ninbox_dir=\"phd/inbox/\"", false},
+		{"empty inbox", "root=\"kb\"\ninbox_dir=\"\"", true},
+		{"escaping inbox", "root=\"kb\"\ninbox_dir=\"../inbox\"", true},
+		{"absolute inbox", "root=\"kb\"\ninbox_dir=\"/tmp\"", true},
+		{"git inbox", "root=\"kb\"\ninbox_dir=\".git\"", true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			if e := os.WriteFile(f, []byte(tt.body), 0600); e != nil {
@@ -68,6 +73,12 @@ func TestConfig(t *testing.T) {
 				if c.TemplatesDir != filepath.Join(h, "xdg", "note", "templates") {
 					t.Fatal(c.TemplatesDir)
 				}
+				if c.InboxDir != "inbox" {
+					t.Fatal(c.InboxDir)
+				}
+			}
+			if tt.name == "inbox" && c.InboxDir != "phd/inbox" {
+				t.Fatal(c.InboxDir)
 			}
 			if tt.name == "argv" && c.Root != filepath.Join(h, "Knowledge") {
 				t.Fatal(c.Root)

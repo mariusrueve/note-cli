@@ -273,3 +273,62 @@ func TestScopedViews(t *testing.T) {
 		t.Fatal(code, out)
 	}
 }
+func TestInboxDefault(t *testing.T) {
+	f := setup(t)
+	clock := time.Date(2026, 3, 4, 9, 5, 6, 0, time.Local)
+	run := func(input string, args ...string) (int, string) {
+		var out, diagnostic bytes.Buffer
+		c := New(Options{In: strings.NewReader(input), Out: &out, Err: &diagnostic, Interactive: func() bool { return false }, Now: func() time.Time { return clock }})
+		c.SetArgs(append([]string{"--config", f.cfg, "new"}, args...))
+		e := c.ExecuteContext(context.Background())
+		return errs.Code(e), diagnostic.String()
+	}
+	read := func(rel string) string {
+		b, e := os.ReadFile(filepath.Join(f.root, filepath.FromSlash(rel)))
+		if e != nil {
+			t.Fatal(e)
+		}
+		return string(b)
+	}
+	if code, d := run("", "--no-open"); code != 0 || !strings.Contains(d, "Created inbox/2026-03-04-090506.md") {
+		t.Fatal(code, d)
+	}
+	if got := read("inbox/2026-03-04-090506.md"); got != "# 2026-03-04 09:05:06\n\n" {
+		t.Fatalf("%q", got)
+	}
+	// The same second never overwrites; it follows the existing-note rules.
+	if code, _ := run("", "--no-open"); code != 4 {
+		t.Fatal(code)
+	}
+	if code, _ := run("", "--title", "TCP/IP Basics", "--template", "idea", "--no-open"); code != 0 {
+		t.Fatal(code)
+	}
+	if got := read("inbox/tcp-ip-basics.md"); !strings.HasPrefix(got, "# TCP/IP Basics\n\nDate: 2026-03-04\n") {
+		t.Fatalf("%q", got)
+	}
+	clock = clock.Add(time.Second)
+	if code, _ := run("", "--title", "日本語", "--no-open"); code != 0 {
+		t.Fatal(code)
+	}
+	if got := read("inbox/2026-03-04-090507.md"); got != "# 日本語\n\n" {
+		t.Fatalf("%q", got)
+	}
+	// The editor opens new inbox notes like any other new note.
+	if code, d := run("", "--title", "Quick thought"); code != 0 {
+		t.Fatal(code, d)
+	}
+	argvData, _ := os.ReadFile(f.record)
+	if !strings.Contains(string(argvData), filepath.Join("inbox", "quick-thought.md")) {
+		t.Fatal(string(argvData))
+	}
+	os.WriteFile(f.cfg, []byte(fmtConfig(f.root, f.editor)+"inbox_dir = \"phd/capture/\"\n"), 0600)
+	if code, _ := run("", "--title", "Idea", "--no-open"); code != 0 {
+		t.Fatal(code)
+	}
+	read("phd/capture/idea.md")
+	os.Symlink(t.TempDir(), filepath.Join(f.root, "linked"))
+	os.WriteFile(f.cfg, []byte(fmtConfig(f.root, f.editor)+"inbox_dir = \"linked\"\n"), 0600)
+	if code, _ := run("", "--no-open"); code == 0 {
+		t.Fatal("created through a symlinked inbox")
+	}
+}

@@ -11,7 +11,7 @@ additional filtering in fzf is fuzzy.
 | `note` / `note open` | Pick from discovered Markdown notes; `--in DIR` |
 | `note QUERY` | Exact existing path (optional `.md`), exact discoverable basename/stem, then relative-path substring; one opens, multiple pick, none offers creation; `--in DIR` |
 | `note open PATH` | Literal existing root-relative filename, optional `.md`; supports ignored notes and preserves legacy spelling |
-| `note new PATH` | Normalize basename, create exclusively, open; `--template NAME`, `--title TITLE`, `--no-open`, `--open-existing` |
+| `note new [PATH]` | Normalize basename, create exclusively, open; without PATH, create in `inbox_dir`; `--template NAME`, `--title TITLE`, `--no-open`, `--open-existing` |
 | `note find QUERY` | Paths only; `--case-sensitive`, `--print`, `--json`, `--in DIR` |
 | `note grep QUERY` | Contents only, one result per matching line; same options |
 | `note search QUERY` | Path/content union, one result per note with first content line; same options |
@@ -22,6 +22,14 @@ additional filtering in fzf is fuzzy.
 | `note completion SHELL` | Print Bash, Zsh, or Fish script |
 | `note sync` | Commit-first sync; `--message TEXT` literal nonempty override |
 | `note self-update` | Install the latest stable release for a release-installer installation; `--check` checks availability without replacing the executable |
+
+`note new` without PATH captures into the configured `inbox_dir` (default
+`inbox`). With `--title`, the basename is the title's normalized slug, with `/`
+treated as a space so the title never adds folders. Without `--title`, or when the
+title has no ASCII letters or digits, the basename is the local time
+`YYYY-MM-DD-HHMMSS`; an untitled note's heading is `YYYY-MM-DD HH:MM:SS`. All
+existing-note rules apply unchanged (a same-second repeat returns 4 headlessly).
+File notes later with `mv` or `git mv`.
 
 `--in DIR` limits the picker, `note QUERY`, find/grep/search, and recent to
 discoverable notes below a root-relative directory, e.g. `note search --in phd
