@@ -64,6 +64,53 @@ func Safe(root, rel string, missing bool) (string, error) {
 	}
 	return abs, nil
 }
+
+// DirSyntax accepts a root-relative directory, allowing one trailing slash.
+func DirSyntax(dir string) (string, error) {
+	rel := strings.TrimSuffix(dir, "/")
+	if e := Syntax(rel, false); e != nil {
+		return "", errs.New(2, "invalid root-relative directory %q", dir)
+	}
+	return rel, nil
+}
+
+// Dir checks that every component of rel exists with exactly this spelling and
+// is a real directory, so prefix filtering matches discovered paths.
+func Dir(root, dir string) (string, error) {
+	rel, e := DirSyntax(dir)
+	if e != nil {
+		return "", e
+	}
+	cur := root
+	for _, p := range strings.Split(rel, "/") {
+		entries, e := os.ReadDir(cur)
+		if e != nil {
+			return "", e
+		}
+		found := false
+		for _, i := range entries {
+			found = found || i.Name() == p
+		}
+		if !found {
+			return "", errs.New(1, "directory does not exist: %s", rel)
+		}
+		cur = filepath.Join(cur, p)
+		i, e := os.Lstat(cur)
+		if e != nil {
+			return "", e
+		}
+		if i.Mode()&os.ModeSymlink != 0 {
+			return "", fmt.Errorf("symlink paths are unsupported: %s", rel)
+		}
+		if !i.IsDir() {
+			return "", errs.New(1, "not a directory: %s", rel)
+		}
+		if _, e := os.Lstat(filepath.Join(cur, ".git")); e == nil {
+			return "", fmt.Errorf("nested repository is unsupported: %s", cur)
+		}
+	}
+	return rel, nil
+}
 func Markdown(path string) bool { return strings.EqualFold(filepath.Ext(path), ".md") }
 func WithoutMD(s string) string {
 	if Markdown(s) {

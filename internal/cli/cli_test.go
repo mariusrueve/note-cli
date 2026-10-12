@@ -221,3 +221,55 @@ func TestResearchTemplateDate(t *testing.T) {
 		}
 	}
 }
+func TestScopedViews(t *testing.T) {
+	f := setup(t)
+	for _, p := range []string{"phd/lab/assay.md", "phd/ideas.md", "docker/assay.md", "phdx/assay.md"} {
+		os.MkdirAll(filepath.Join(f.root, filepath.Dir(p)), 0755)
+		os.WriteFile(filepath.Join(f.root, p), []byte("binding assay\n"), 0600)
+	}
+	os.WriteFile(filepath.Join(f.root, "phd", "ideas.md"), []byte("open questions\n"), 0600)
+	for _, kind := range []string{"find", "grep", "search"} {
+		code, out, _ := execute(t, f, false, "", kind, "assay", "--in", "phd/", "--json")
+		var results []struct{ Path string }
+		json.Unmarshal([]byte(out), &results)
+		if code != 0 || len(results) != 1 || results[0].Path != "phd/lab/assay.md" {
+			t.Fatal(kind, code, out)
+		}
+	}
+	code, out, _ := execute(t, f, false, "", "recent", "--in", "phd", "--print")
+	if code != 0 || strings.Count(out, "\n") != 2 || strings.Contains(out, "docker") || strings.Contains(out, "phdx") {
+		t.Fatal(code, out)
+	}
+	code, out, _ = execute(t, f, false, "", "find", "assay", "--in", "phd/lab", "--json", "--case-sensitive")
+	if code != 0 || !strings.Contains(out, `"phd/lab/assay.md"`) {
+		t.Fatal(code, out)
+	}
+	for args, want := range map[string]int{"find assay --in missing": 1, "find assay --in docker/assay.md": 1, "find assay --in ../x": 2, "recent --in /abs": 2, "open phd/ideas --in phd": 2, "find ideas --in docker --print": 1} {
+		if code, _, _ := execute(t, f, false, "", strings.Fields(args)...); code != want {
+			t.Fatal(args, code, want)
+		}
+	}
+	// The shortcut considers only scoped notes; a root-level exact path outside the scope is not opened.
+	code, _, _ = execute(t, f, false, "", "--in", "phd", "assay")
+	if code != 0 {
+		t.Fatal(code)
+	}
+	argvData, _ := os.ReadFile(f.record)
+	if !strings.Contains(string(argvData), filepath.Join("phd", "lab", "assay.md")) {
+		t.Fatal(string(argvData))
+	}
+	if code, _, _ = execute(t, f, false, "", "--in", "phd", "docker/assay"); code != 1 {
+		t.Fatal(code)
+	}
+	code, _, notice := execute(t, f, true, "y\n", "--in", "phd", "new-question")
+	if code != 0 {
+		t.Fatal(code, notice)
+	}
+	if _, e := os.Stat(filepath.Join(f.root, "phd", "new-question.md")); e != nil {
+		t.Fatal(e)
+	}
+	code, out, _ = execute(t, f, false, "", "__complete", "find", "assay", "--in", "ph")
+	if code != 0 || !strings.Contains(out, "phd/") || strings.Contains(out, ".md") {
+		t.Fatal(code, out)
+	}
+}

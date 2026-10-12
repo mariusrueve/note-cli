@@ -48,13 +48,15 @@ Ordered by value and effort; implement one item per change.
 
 ### 2. Scoped views: `--in DIR`
 
-- [ ] `--in DIR` for `find`, `grep`, `search`, `recent`, the bare `note` picker,
+- [x] `--in DIR` for `find`, `grep`, `search`, `recent`, the bare `note` picker,
   `open` without a path, and `note QUERY`.
-- [ ] DIR is root-relative and passes the existing path-safety rules (no absolute
+- [x] DIR is root-relative and passes the existing path-safety rules (no absolute
   paths, `..`, symlinks, nested repositories, or `.git`).
-- [ ] Results remain root-relative, so `--print`, JSON, and `note open` are unchanged.
-- [ ] Invalid DIR syntax exits 2; a nonexistent or non-directory DIR exits 1.
-- [ ] Shell completion suggests directories; document in `docs/cli.md`.
+- [x] Results remain root-relative, so `--print`, JSON, and `note open` are unchanged.
+- [x] Invalid DIR syntax exits 2; a nonexistent or non-directory DIR, or a
+  spelling that differs from the on-disk name, exits 1; symlinked or nested-repo
+  directories exit 3 like note paths.
+- [x] Shell completion suggests directories; document in `docs/cli.md`.
 
 ### 3. Inbox default for capture
 

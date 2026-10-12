@@ -72,21 +72,30 @@ func New(o Options) *cobra.Command {
 		o.Commit = "unknown"
 	}
 	a := &app{Options: o, reader: bufio.NewReader(o.In)}
+	var rootIn, openIn string
 	root := &cobra.Command{Use: "note [QUERY]", Short: "Create, find, open, and sync a Markdown knowledge base", Version: o.Version + " (" + o.Commit + ")", SilenceUsage: true, SilenceErrors: true, Args: args(0, 1), RunE: func(cmd *cobra.Command, v []string) error {
 		if len(v) > 0 {
 			if e := query(v[0]); e != nil {
 				return e
 			}
 		}
+		if e := scopeSyntax(cmd, rootIn); e != nil {
+			return e
+		}
 		c, e := a.load()
 		if e != nil {
 			return e
 		}
-		if len(v) == 0 {
-			return a.browse(cmd.Context(), c)
+		scope, e := scopeDir(cmd, c, rootIn)
+		if e != nil {
+			return e
 		}
-		return a.lookup(cmd.Context(), c, v[0])
+		if len(v) == 0 {
+			return a.browse(cmd.Context(), c, scope)
+		}
+		return a.lookup(cmd.Context(), c, v[0], scope)
 	}, ValidArgsFunction: a.completePaths}
+	a.scopeFlag(root, &rootIn)
 	root.SetIn(o.In)
 	root.SetOut(o.Out)
 	root.SetErr(o.Err)
@@ -107,16 +116,26 @@ func New(o Options) *cobra.Command {
 	}
 	open := &cobra.Command{Use: "open [PATH]", Short: "Open an existing Markdown note, or select one", Args: args(0, 1), ValidArgsFunction: a.completePaths, RunE: func(cmd *cobra.Command, v []string) error {
 		if len(v) > 0 {
+			if cmd.Flags().Changed("in") {
+				return errs.New(2, "--in applies only to the picker; open PATH takes a root-relative path")
+			}
 			if e := notes.Syntax(v[0], false); e != nil {
 				return e
 			}
+		}
+		if e := scopeSyntax(cmd, openIn); e != nil {
+			return e
 		}
 		c, e := a.load()
 		if e != nil {
 			return e
 		}
 		if len(v) == 0 {
-			return a.browse(cmd.Context(), c)
+			scope, e := scopeDir(cmd, c, openIn)
+			if e != nil {
+				return e
+			}
+			return a.browse(cmd.Context(), c, scope)
 		}
 		r, exists, e := exact(c.Root, v[0])
 		if e != nil {
@@ -127,6 +146,7 @@ func New(o Options) *cobra.Command {
 		}
 		return a.edit(cmd.Context(), c, r)
 	}}
+	a.scopeFlag(open, &openIn)
 	newCmd := &cobra.Command{Use: "new PATH", Short: "Create a note exclusively and open it", Args: args(1, 1), ValidArgsFunction: a.completePaths}
 	var template, title string
 	var noOpen, openExisting bool
@@ -243,6 +263,32 @@ func (a *app) load() (config.Config, error) {
 	}
 	e = config.CanonicalRoot(&c)
 	return c, e
+}
+func (a *app) scopeFlag(cmd *cobra.Command, in *string) {
+	cmd.Flags().StringVar(in, "in", "", "Limit to notes below this root-relative directory")
+	cmd.RegisterFlagCompletionFunc("in", a.completeDirs)
+}
+func scopeSyntax(cmd *cobra.Command, in string) error {
+	if !cmd.Flags().Changed("in") {
+		return nil
+	}
+	_, e := notes.DirSyntax(in)
+	return e
+}
+
+// scopeDir returns the validated root-relative --in directory, or "" for the whole root.
+func scopeDir(cmd *cobra.Command, c config.Config, in string) (string, error) {
+	if !cmd.Flags().Changed("in") {
+		return "", nil
+	}
+	return notes.Dir(c.Root, in)
+}
+func (a *app) discover(ctx context.Context, c config.Config, scope string) ([]search.Result, error) {
+	all, e := search.Discover(ctx, c, a.Err)
+	if e != nil || scope == "" {
+		return all, e
+	}
+	return search.Within(all, scope), nil
 }
 func (a *app) edit(ctx context.Context, c config.Config, r search.Result) error {
 	p, e := notes.Safe(c.Root, r.Path, false)
@@ -388,11 +434,11 @@ func (a *app) create(ctx context.Context, c config.Config, input, template, titl
 	}
 	return a.edit(ctx, c, search.Listing(rel))
 }
-func (a *app) browse(ctx context.Context, c config.Config) error {
+func (a *app) browse(ctx context.Context, c config.Config, scope string) error {
 	if !a.Interactive() {
 		return errs.New(2, "note picker needs an interactive terminal; use note find QUERY --print or note recent --json")
 	}
-	all, e := search.Discover(ctx, c, a.Err)
+	all, e := a.discover(ctx, c, scope)
 	if e != nil {
 		return e
 	}
@@ -411,7 +457,7 @@ func (a *app) selectOpen(ctx context.Context, c config.Config, results []search.
 	}
 	return a.edit(ctx, c, r)
 }
-func (a *app) lookup(ctx context.Context, c config.Config, q string) error {
+func (a *app) lookup(ctx context.Context, c config.Config, q, scope string) error {
 	if e := notes.Syntax(q, false); e != nil {
 		return e
 	}
@@ -419,10 +465,10 @@ func (a *app) lookup(ctx context.Context, c config.Config, q string) error {
 	if e != nil {
 		return e
 	}
-	if exists {
+	if exists && (scope == "" || strings.HasPrefix(r.Path, scope+"/")) {
 		return a.edit(ctx, c, r)
 	}
-	all, e := search.Discover(ctx, c, a.Err)
+	all, e := a.discover(ctx, c, scope)
 	if e != nil {
 		return e
 	}
@@ -456,6 +502,9 @@ func (a *app) lookup(ctx context.Context, c config.Config, q string) error {
 	if s != "y" && s != "yes" {
 		return errs.New(130, "creation declined")
 	}
+	if scope != "" {
+		q = scope + "/" + q
+	}
 	return a.create(ctx, c, q, "", "", false, false, false)
 }
 func (a *app) resultCommand(kind string) *cobra.Command {
@@ -469,6 +518,8 @@ func (a *app) resultCommand(kind string) *cobra.Command {
 	cmd := &cobra.Command{Use: use, Short: short, Args: args(min, max)}
 	var print, json, sensitive bool
 	var limit int
+	var in string
+	a.scopeFlag(cmd, &in)
 	cmd.Flags().BoolVar(&print, "print", false, "Print human-readable results")
 	cmd.Flags().BoolVar(&json, "json", false, "Print a JSON array")
 	if kind == "recent" {
@@ -488,14 +539,21 @@ func (a *app) resultCommand(kind string) *cobra.Command {
 				return e
 			}
 		}
+		if e := scopeSyntax(cmd, in); e != nil {
+			return e
+		}
 		c, e := a.load()
+		if e != nil {
+			return e
+		}
+		scope, e := scopeDir(cmd, c, in)
 		if e != nil {
 			return e
 		}
 		if !cmd.Flags().Changed("case-sensitive") {
 			sensitive = c.Search.CaseSensitive
 		}
-		all, e := search.Discover(cmd.Context(), c, a.Err)
+		all, e := a.discover(cmd.Context(), c, scope)
 		if e != nil {
 			return e
 		}
@@ -597,6 +655,18 @@ func (a *app) completePaths(cmd *cobra.Command, args []string, prefix string) ([
 		directive |= cobra.ShellCompDirectiveNoSpace
 	}
 	sort.Strings(out)
+	return out, directive
+}
+
+// completeDirs offers only the directory candidates of path completion.
+func (a *app) completeDirs(cmd *cobra.Command, _ []string, prefix string) ([]string, cobra.ShellCompDirective) {
+	all, directive := a.completePaths(cmd, nil, prefix)
+	out := []string{}
+	for _, p := range all {
+		if strings.HasSuffix(p, "/") {
+			out = append(out, p)
+		}
+	}
 	return out, directive
 }
 func (a *app) completeTemplates(_ *cobra.Command, _ []string, prefix string) ([]string, cobra.ShellCompDirective) {

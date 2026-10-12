@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `--in DIR` to the picker, `note QUERY`, `open`, `find`, `grep`, `search`,
+  and `recent` to limit results to notes below a root-relative directory.
+  Results stay root-relative; completion suggests directories.
 - Add embedded research templates `paper`, `experiment`, `meeting`, and `idea`,
   and a fixed `{{date}}` placeholder for the local creation date (`YYYY-MM-DD`).
 - Build with Go 1.27.2 to pick up standard-library security fixes in
