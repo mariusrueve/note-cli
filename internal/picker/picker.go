@@ -85,6 +85,79 @@ func Pick(ctx context.Context, c config.Config, results []search.Result, kind, e
 	return r, nil
 }
 
+// TextManifest carries preview texts for ChooseWithPreview.
+type TextManifest struct {
+	SchemaVersion int      `json:"schema_version"`
+	Texts         []string `json:"texts"`
+}
+
+// ChooseWithPreview selects a display line while the hidden __preview-text
+// helper of executable shows the matching preview text.
+func ChooseWithPreview(ctx context.Context, c config.Config, displays, previews []string, executable string, stderr io.Writer) (int, error) {
+	if len(displays) == 0 || len(previews) != len(displays) {
+		return 0, errs.New(1, "nothing to select")
+	}
+	f, e := os.CreateTemp("", "note-preview-*.json")
+	if e != nil {
+		return 0, e
+	}
+	defer os.Remove(f.Name())
+	e = json.NewEncoder(f).Encode(TextManifest{1, previews})
+	if ce := f.Close(); e == nil {
+		e = ce
+	}
+	if e != nil {
+		return 0, e
+	}
+	if executable == "" {
+		if executable, e = os.Executable(); e != nil {
+			return 0, e
+		}
+	}
+	if executable, e = filepath.Abs(executable); e != nil {
+		return 0, e
+	}
+	preview := Quote(executable) + " __preview-text --manifest " + Quote(f.Name()) + " --id {1}"
+	return choose(ctx, c, displays, stderr, "--preview-window="+c.Finder.PreviewWindow, "--preview="+preview)
+}
+
+// PreviewText prints one manifest text with controls escaped, bounded to 1 MiB.
+func PreviewText(manifest string, id int, w io.Writer) error {
+	f, e := os.Open(manifest)
+	if e != nil {
+		return e
+	}
+	defer f.Close()
+	var m TextManifest
+	d := json.NewDecoder(io.LimitReader(f, 16<<20))
+	d.DisallowUnknownFields()
+	if e = d.Decode(&m); e != nil {
+		return fmt.Errorf("preview manifest: %w", e)
+	}
+	var extra any
+	if d.Decode(&extra) != io.EOF {
+		return fmt.Errorf("preview manifest has trailing data")
+	}
+	if m.SchemaVersion != 1 || id < 1 || id > len(m.Texts) {
+		return fmt.Errorf("invalid preview manifest/ID")
+	}
+	text := m.Texts[id-1]
+	truncated := len(text) > 1<<20
+	if truncated {
+		text = text[:1<<20]
+	}
+	out := bufio.NewWriter(w)
+	for _, line := range strings.Split(text, "\n") {
+		if _, e = fmt.Fprintln(out, search.Visible(line)); e != nil {
+			return e
+		}
+	}
+	if truncated {
+		fmt.Fprintln(out, "[preview truncated at 1 MiB]")
+	}
+	return out.Flush()
+}
+
 // Choose selects one of the already escaped display lines without a preview.
 func Choose(ctx context.Context, c config.Config, displays []string, stderr io.Writer) (int, error) {
 	if len(displays) == 0 {

@@ -49,7 +49,7 @@ func TestInteractiveTerminal(t *testing.T) {
 		t.Fatal(e)
 	}
 	bibliography := filepath.Join(dir, "refs.bib")
-	if e := os.WriteFile(bibliography, []byte("@article{ptyFirst2020, title = {PTY First}, author = {Doe, Jane}, date = {2020}}\n@book{ptySecond2021, title = {PTY Second}}\n"), 0600); e != nil {
+	if e := os.WriteFile(bibliography, []byte("@article{ptyFirst2020, title = {PTY First}, author = {Doe, Jane}, date = {2020}, journaltitle = {PTY Journal}, abstract = {PTY-ABSTRACT-READY}}\n@book{ptySecond2021, title = {PTY Second}}\n"), 0600); e != nil {
 		t.Fatal(e)
 	}
 	editor, e := os.Executable()
@@ -71,7 +71,8 @@ func TestInteractiveTerminal(t *testing.T) {
 		{"picker cancellation", nil, "PREVIEW-SOURCE-READY", "\x03", "", 130},
 		{"creation opens editor", []string{"new", "created"}, "EDITOR-OPEN:", "", "created.md", 0},
 		{"existing note cancellation", []string{"new", "example"}, "Enter", "\x03", "", 130},
-		{"citation picker creates note", []string{"cite"}, "ptyFirst2020", "\r", filepath.Join("knowledge", "literature", "ptyfirst2020.md"), 0},
+		{"citation picker creates note", []string{"cite"}, "PTY-ABSTRACT-READY", "\r", filepath.Join("knowledge", "literature", "ptyfirst2020.md"), 0},
+		{"citation picker marks existing note", []string{"cite"}, "✓ ptyFirst2020", "\x03", "", 130},
 		{"backlinks picker opens linking note", []string{"backlinks", "example"}, "linker.md:1:", "\r", filepath.Join("knowledge", "linker.md"), 0},
 		{"deadlinks picker cancellation", []string{"deadlinks"}, "missing.md", "\x03", "", 130},
 	} {

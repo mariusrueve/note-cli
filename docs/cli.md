@@ -40,7 +40,10 @@ note path is `literature_dir/KEY` with the usual basename normalization, so
 `smithDeepLearning2024` becomes `smithdeeplearning2024.md`; the exact key is
 available as `{{citekey}}`. An existing note opens without a prompt and is never
 retemplated; with `--no-open` it returns 4. Without KEY, a terminal shows an fzf
-picker of key, year, authors, and title; headless use exits 2. Completion offers
+picker of key, year, authors, and title, marking entries that already have a
+literature note with `✓`. The preview shows title, authors, year, venue, DOI, URL,
+and abstract with controls escaped, read through a private temporary manifest.
+Headless use exits 2. Completion offers
 keys. `note new PATH --cite KEY` fills any template from the entry (default
 template `paper`); without PATH it uses `literature_dir/KEY`.
 

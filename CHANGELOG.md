@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The `note cite` picker marks entries that already have a literature note and
+  previews title, authors, year, venue, DOI, URL, and abstract.
 - Add `{{venue}}` (journal, book title, publisher, or e-print type) and
   `{{abstract}}` citation placeholders; the `paper` template shows the venue.
 
