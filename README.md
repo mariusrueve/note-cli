@@ -57,6 +57,7 @@ note docker                # convenient lookup; offers confirmed creation
 note find docker           # paths only
 note grep "extended connectivity" # contents only
 note search fingerprint    # both, once per note
+note search --in phd fingerprint  # only notes below phd/
 note recent --limit 20
 note search fingerprint --json
 note templates

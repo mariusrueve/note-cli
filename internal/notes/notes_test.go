@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sync"
 	"testing"
+
+	"github.com/mariusrueve/note-cli/internal/errs"
 )
 
 func TestPaths(t *testing.T) {
@@ -89,5 +91,22 @@ func TestExclusiveCreation(t *testing.T) {
 	b, _ := os.ReadFile(filepath.Join(root, "race.md"))
 	if string(b) != "one" && string(b) != "two" {
 		t.Fatal(string(b))
+	}
+}
+func TestDir(t *testing.T) {
+	root := t.TempDir()
+	os.MkdirAll(filepath.Join(root, "phd", "lab"), 0755)
+	os.WriteFile(filepath.Join(root, "phd", "file.md"), nil, 0600)
+	os.MkdirAll(filepath.Join(root, "repo", ".git"), 0755)
+	os.Symlink(filepath.Join(root, "phd"), filepath.Join(root, "link"))
+	for in, want := range map[string]string{"phd": "phd", "phd/": "phd", "phd/lab": "phd/lab"} {
+		if got, e := Dir(root, in); e != nil || got != want {
+			t.Fatal(in, got, e)
+		}
+	}
+	for in, code := range map[string]int{"": 2, "/": 2, "/abs": 2, "../x": 2, "a//b": 2, ".git": 2, "missing": 1, "PhD": 1, "phd/file.md": 1, "link": 3, "repo": 3} {
+		if _, e := Dir(root, in); errs.Code(e) != code {
+			t.Fatal(in, e, errs.Code(e))
+		}
 	}
 }

@@ -61,6 +61,17 @@ func Discover(ctx context.Context, c config.Config, warn io.Writer) ([]Result, e
 	sort.Slice(out, func(i, j int) bool { return out[i].Path < out[j].Path })
 	return out, nil
 }
+
+// Within keeps results below the root-relative directory dir; paths stay root-relative.
+func Within(all []Result, dir string) []Result {
+	out := []Result{}
+	for _, r := range all {
+		if strings.HasPrefix(r.Path, dir+"/") {
+			out = append(out, r)
+		}
+	}
+	return out
+}
 func Find(all []Result, q string, sensitive bool) []Result {
 	out := []Result{}
 	fold := cases.Fold()

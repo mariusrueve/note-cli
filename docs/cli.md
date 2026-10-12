@@ -8,20 +8,31 @@ additional filtering in fzf is fuzzy.
 
 | Command | Behavior/options |
 | --- | --- |
-| `note` / `note open` | Pick from discovered Markdown notes |
-| `note QUERY` | Exact existing path (optional `.md`), exact discoverable basename/stem, then relative-path substring; one opens, multiple pick, none offers creation |
+| `note` / `note open` | Pick from discovered Markdown notes; `--in DIR` |
+| `note QUERY` | Exact existing path (optional `.md`), exact discoverable basename/stem, then relative-path substring; one opens, multiple pick, none offers creation; `--in DIR` |
 | `note open PATH` | Literal existing root-relative filename, optional `.md`; supports ignored notes and preserves legacy spelling |
 | `note new PATH` | Normalize basename, create exclusively, open; `--template NAME`, `--title TITLE`, `--no-open`, `--open-existing` |
-| `note find QUERY` | Paths only; `--case-sensitive`, `--print`, `--json` |
+| `note find QUERY` | Paths only; `--case-sensitive`, `--print`, `--json`, `--in DIR` |
 | `note grep QUERY` | Contents only, one result per matching line; same options |
 | `note search QUERY` | Path/content union, one result per note with first content line; same options |
-| `note recent` | Newest mtime first, path order for ties; `--limit N` (20, positive), `--print`, `--json` |
+| `note recent` | Newest mtime first, path order for ties; `--limit N` (20, positive), `--print`, `--json`, `--in DIR` |
 | `note templates` | Effective templates, sources, embedded overrides, default |
 | `note init` | Create config/root; `--root PATH` (`~/Knowledge`), `--editor EXECUTABLE` (`hx`) |
 | `note doctor` | Read-only effective config/tools/root/Git readiness/completion guidance |
 | `note completion SHELL` | Print Bash, Zsh, or Fish script |
 | `note sync` | Commit-first sync; `--message TEXT` literal nonempty override |
 | `note self-update` | Install the latest stable release for a release-installer installation; `--check` checks availability without replacing the executable |
+
+`--in DIR` limits the picker, `note QUERY`, find/grep/search, and recent to
+discoverable notes below a root-relative directory, e.g. `note search --in phd
+fingerprint`. One trailing slash is accepted. Results, `--print`, and JSON keep
+root-relative paths. Discovery and its ignore rules still start at the root.
+Invalid directory syntax exits 2. A missing directory, a non-directory, or a
+spelling that differs from the on-disk name (including case) exits 1. Symlinked
+or nested-repository directories are rejected like note paths (exit 3).
+With `note --in DIR QUERY`, an exact path opens only when it lies inside DIR, and
+confirmed creation makes `DIR/QUERY`. `note open --in DIR` applies only to the
+picker; combining it with PATH exits 2. Completion offers directories.
 
 `--print` and `--json` are mutually exclusive. `--no-open` and `--open-existing`
 are mutually exclusive. Path arguments reject absolute paths, `.`, `..`, empty
