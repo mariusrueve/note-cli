@@ -44,13 +44,21 @@ func TestInteractiveTerminal(t *testing.T) {
 	if e := os.WriteFile(path, content, 0600); e != nil {
 		t.Fatal(e)
 	}
+	linker := filepath.Join(root, "linker.md")
+	if e := os.WriteFile(linker, []byte("[example](example.md)\n[gone](missing.md)\n"), 0600); e != nil {
+		t.Fatal(e)
+	}
+	bibliography := filepath.Join(dir, "refs.bib")
+	if e := os.WriteFile(bibliography, []byte("@article{ptyFirst2020, title = {PTY First}, author = {Doe, Jane}, date = {2020}}\n@book{ptySecond2021, title = {PTY Second}}\n"), 0600); e != nil {
+		t.Fatal(e)
+	}
 	editor, e := os.Executable()
 	if e != nil {
 		t.Fatal(e)
 	}
 	quote := func(s string) string { b, _ := json.Marshal(s); return string(b) }
 	cfg := filepath.Join(dir, "config.toml")
-	if e := os.WriteFile(cfg, []byte("root="+quote(root)+"\neditor=["+quote(editor)+",\"-test.run=^TestPTYEditor$\"]\n[finder]\nheight=\"100%\"\npreview_window=\"right:60%:wrap\"\n"), 0600); e != nil {
+	if e := os.WriteFile(cfg, []byte("root="+quote(root)+"\nbibliography="+quote(bibliography)+"\neditor=["+quote(editor)+",\"-test.run=^TestPTYEditor$\"]\n[finder]\nheight=\"100%\"\npreview_window=\"right:60%:wrap\"\n"), 0600); e != nil {
 		t.Fatal(e)
 	}
 	for _, tc := range []struct {
@@ -63,6 +71,9 @@ func TestInteractiveTerminal(t *testing.T) {
 		{"picker cancellation", nil, "PREVIEW-SOURCE-READY", "\x03", "", 130},
 		{"creation opens editor", []string{"new", "created"}, "EDITOR-OPEN:", "", "created.md", 0},
 		{"existing note cancellation", []string{"new", "example"}, "Enter", "\x03", "", 130},
+		{"citation picker creates note", []string{"cite"}, "ptyFirst2020", "\r", filepath.Join("knowledge", "literature", "ptyfirst2020.md"), 0},
+		{"backlinks picker opens linking note", []string{"backlinks", "example"}, "linker.md:1:", "\r", filepath.Join("knowledge", "linker.md"), 0},
+		{"deadlinks picker cancellation", []string{"deadlinks"}, "missing.md", "\x03", "", 130},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cmd := exec.Command(binary, append([]string{"--config", cfg}, tc.args...)...)

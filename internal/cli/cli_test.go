@@ -432,3 +432,27 @@ func TestCitations(t *testing.T) {
 		t.Fatal("bibliography modified")
 	}
 }
+func TestDoctorDirectoriesAndBibliography(t *testing.T) {
+	f := setup(t)
+	os.Mkdir(filepath.Join(f.root, "inbox"), 0755)
+	_, _, d := execute(t, f, false, "", "doctor")
+	for _, want := range []string{"Inbox: inbox/ (exists)", "Literature: literature/ (created on first use)", "Bibliography: not configured"} {
+		if !strings.Contains(d, want) {
+			t.Fatalf("missing %q in %q", want, d)
+		}
+	}
+	bibFile := filepath.Join(t.TempDir(), "refs.bib")
+	b, _ := json.Marshal(bibFile)
+	os.WriteFile(f.cfg, []byte(fmtConfig(f.root, f.editor)+"bibliography = "+string(b)+"\nliterature_dir = \"lit\"\n"), 0600)
+	os.WriteFile(filepath.Join(f.root, "lit"), nil, 0600)
+	os.WriteFile(bibFile, []byte("@article{a, title = {x}}\n@book{b, title = {y}}\n"), 0600)
+	_, _, d = execute(t, f, false, "", "doctor")
+	if !strings.Contains(d, "refs.bib (2 entries)") || !strings.Contains(d, "Literature: not a directory: lit") {
+		t.Fatal(d)
+	}
+	os.WriteFile(bibFile, []byte("@article{a, title = {x}\n"), 0600)
+	code, _, d := execute(t, f, false, "", "doctor")
+	if code != 3 || !strings.Contains(d, "Bibliography: bibliography") || !strings.Contains(d, "unterminated entry") || !strings.Contains(d, "doctor found problems") {
+		t.Fatal(code, d)
+	}
+}
