@@ -241,7 +241,7 @@ func New(o Options) *cobra.Command {
 	preview.Flags().StringVar(&manifest, "manifest", "", "Manifest path")
 	preview.Flags().IntVar(&id, "id", 0, "Record ID")
 	preview.RunE = func(_ *cobra.Command, _ []string) error { return picker.Preview(manifest, id, a.Out) }
-	doctor := &cobra.Command{Use: "doctor", Short: "Check configuration, tools, and completion prerequisites", Args: args(0, 0), RunE: func(cmd *cobra.Command, _ []string) error { return a.doctor(cmd.Context()) }}
+	doctor := &cobra.Command{Use: "doctor", Short: "Check configuration, tools, directories, bibliography, and Git readiness", Args: args(0, 0), RunE: func(cmd *cobra.Command, _ []string) error { return a.doctor(cmd.Context()) }}
 	syncCmd := &cobra.Command{Use: "sync", Short: "Commit, fetch/rebase, and push a dedicated knowledge repository", Args: args(0, 0)}
 	var message string
 	syncCmd.Flags().StringVar(&message, "message", "", "Literal sync commit message override")
@@ -933,6 +933,24 @@ func (a *app) doctor(ctx context.Context) error {
 			fmt.Fprintf(a.Err, "%s: %s\n", tool.name, search.Visible(p))
 		}
 	}
+	for _, d := range []struct{ name, dir string }{{"Inbox", c.InboxDir}, {"Literature", c.LiteratureDir}} {
+		if _, e := notes.Dir(c.Root, d.dir); e == nil {
+			fmt.Fprintf(a.Err, "%s: %s/ (exists)\n", d.name, search.Visible(d.dir))
+		} else if errs.Code(e) == 1 && strings.HasPrefix(e.Error(), "directory does not exist") {
+			fmt.Fprintf(a.Err, "%s: %s/ (created on first use)\n", d.name, search.Visible(d.dir))
+		} else {
+			failed = true
+			fmt.Fprintf(a.Err, "%s: %v\n", d.name, e)
+		}
+	}
+	if c.Bibliography == "" {
+		fmt.Fprintln(a.Err, "Bibliography: not configured")
+	} else if entries, e := bib.Load(c.Bibliography); e != nil {
+		failed = true
+		fmt.Fprintf(a.Err, "Bibliography: %v\n", e)
+	} else {
+		fmt.Fprintf(a.Err, "Bibliography: %s (%d entries)\n", search.Visible(c.Bibliography), len(entries))
+	}
 	if state, e := syncgit.Check(ctx, c); e != nil {
 		failed = true
 		fmt.Fprintf(a.Err, "Git readiness: %v\n", e)
@@ -941,7 +959,7 @@ func (a *app) doctor(ctx context.Context) error {
 	}
 	fmt.Fprintln(a.Err, "Completion: run note completion bash|zsh|fish; see docs/completion.md.")
 	if failed {
-		return errs.New(3, "some tools are missing; new --no-open needs no external tools")
+		return errs.New(3, "doctor found problems above; new --no-open needs no external tools")
 	}
 	return nil
 }

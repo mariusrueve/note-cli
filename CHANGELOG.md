@@ -4,6 +4,8 @@
 
 ## [0.2.0] - 2026-10-12
 
+- `note doctor` reports the inbox and literature directories and the
+  bibliography's entry count, failing on an unreadable or invalid bibliography.
 - Configuration errors for unknown keys now name each key and its line, and
   suggest updating `note` when the key comes from a newer version.
 - Add `note cite [KEY]` and `note new --cite KEY` for literature notes from a

@@ -11,6 +11,10 @@ Version 0.2.0 preparation on 2026-10-12, macOS ARM64, Go 1.27.2:
 - Local `check`, `-e go126 check`, `security` (no vulnerabilities found), and
   `lint-workflows` passed. Main CI passed for the feature merge
   ([mariusrueve/note-cli#5](https://github.com/mariusrueve/note-cli/pull/5)).
+- `note doctor` checks for directories and bibliography are covered by CLI
+  tests. Real-fzf PTY tests now also cover the citation picker (creation and
+  editor), the backlinks picker (opening the linking note), and deadlinks
+  cancellation; they pass locally and also run against archived binaries.
 - `note cite` was smoke-tested read-only against a real 116-entry Better BibTeX
   export in a temporary root: every entry rendered without leftover braces or
   escapes, and the bibliography checksum was unchanged.

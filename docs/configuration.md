@@ -25,7 +25,9 @@ paths, `..`, `.git`, and control characters are errors. It is created on first u
 BibTeX auto-export from Zotero (relative paths resolve against the config
 directory; `~` expands). It is only read, never modified. `literature_dir`
 (default `literature`) is the root-relative directory for `note cite` notes and
-follows the same rules as `inbox_dir`.
+follows the same rules as `inbox_dir`. `note doctor` reports both directories and
+the bibliography's entry count, and fails when a configured bibliography cannot be
+read or parsed.
 Precedence is defaults, TOML, applicable CLI flags. `EDITOR` and `VISUAL` are not
 used. Executable availability is checked only when needed by the command.
 
