@@ -50,6 +50,7 @@ or module cache. The module is `github.com/mariusrueve/note-cli`.
 note init --root ~/Knowledge
 note new docker/networking
 note new cheminformatics/ecfp --template concept --title ECFP
+note new phd/lab/binding-assay --template experiment  # also paper, meeting, idea
 note open docker/networking
 note                       # fzf with a right-side source preview
 note docker                # convenient lookup; offers confirmed creation

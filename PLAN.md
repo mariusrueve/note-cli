@@ -40,11 +40,11 @@ Ordered by value and effort; implement one item per change.
 
 ### 1. Research templates
 
-- [ ] Embedded templates `paper`, `experiment`, `meeting`, and `idea` in
+- [x] Embedded templates `paper`, `experiment`, `meeting`, and `idea` in
   `internal/templates/defaults/`, overridable like existing templates.
-- [ ] New fixed placeholder `{{date}}`: local date `YYYY-MM-DD` from the injected
+- [x] New fixed placeholder `{{date}}`: local date `YYYY-MM-DD` from the injected
   clock. Unknown-placeholder behavior is unchanged.
-- [ ] Document in `docs/templates.md`; `note templates` lists the new entries.
+- [x] Document in `docs/templates.md`; `note templates` lists the new entries.
 
 ### 2. Scoped views: `--in DIR`
 

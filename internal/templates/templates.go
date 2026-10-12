@@ -75,6 +75,10 @@ func Load(dir, name string) (string, error) {
 	}
 	return string(b), nil
 }
+
+// placeholders are the only names Render accepts; values are inserted literally.
+var placeholders = map[string]bool{"title": true, "slug": true, "path": true, "date": true}
+
 func Render(src string, values map[string]string) (string, error) {
 	var b strings.Builder
 	escaped := 0
@@ -92,7 +96,7 @@ func Render(src string, values map[string]string) (string, error) {
 			}
 			key := src[i+2 : i+2+end]
 			v, ok := values[key]
-			if !ok || key != "title" && key != "slug" && key != "path" {
+			if !ok || !placeholders[key] {
 				return "", fmt.Errorf("unknown template placeholder %q", key)
 			}
 			b.WriteString(v)
