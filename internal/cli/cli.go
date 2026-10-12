@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -36,11 +37,19 @@ type Options struct {
 	Version, Commit string
 	Distribution    string
 	UpdateClient    *update.Client
+	Now             func() time.Time
 }
 type app struct {
 	Options
 	configPath string
 	reader     *bufio.Reader
+}
+
+func (a *app) now() time.Time {
+	if a.Now == nil {
+		return time.Now()
+	}
+	return a.Now()
 }
 
 func New(o Options) *cobra.Command {
@@ -333,7 +342,7 @@ func (a *app) create(ctx context.Context, c config.Config, input, template, titl
 	if !explicitTitle {
 		title = notes.Title(input)
 	}
-	contents, e := templates.Render(src, map[string]string{"title": title, "slug": notes.WithoutMD(filepath.Base(rel)), "path": rel})
+	contents, e := templates.Render(src, map[string]string{"title": title, "slug": notes.WithoutMD(filepath.Base(rel)), "path": rel, "date": a.now().Format(time.DateOnly)})
 	if e != nil {
 		return e
 	}

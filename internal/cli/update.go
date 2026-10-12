@@ -118,7 +118,7 @@ func (a *app) updateHint(cmd *cobra.Command) {
 	}
 	ctx, cancel := context.WithTimeout(cmd.Context(), time.Second)
 	defer cancel()
-	if latest := a.updater().Hint(ctx, path, a.Version, time.Now()); latest != "" {
+	if latest := a.updater().Hint(ctx, path, a.Version, a.now()); latest != "" {
 		fmt.Fprintf(a.Err, "note %s is available; run note self-update to install it.\n", latest)
 	}
 }

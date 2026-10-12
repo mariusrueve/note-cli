@@ -89,7 +89,7 @@ func TestCompletionFallbacks(t *testing.T) {
 		t.Fatal(v)
 	}
 	v, _ = a.completeTemplates(cmd, nil, "")
-	if len(v) != 4 {
+	if len(v) != 8 {
 		t.Fatal(v)
 	}
 	a.configPath = "/missing-config"
@@ -98,7 +98,7 @@ func TestCompletionFallbacks(t *testing.T) {
 		t.Fatal(v)
 	}
 	v, _ = a.completeTemplates(cmd, nil, "")
-	if len(v) != 4 {
+	if len(v) != 8 {
 		t.Fatal(v)
 	}
 	os.WriteFile(f.cfg, []byte(fmtConfig(f.root, f.editor)), 0600)

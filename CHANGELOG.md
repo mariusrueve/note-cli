@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add embedded research templates `paper`, `experiment`, `meeting`, and `idea`,
+  and a fixed `{{date}}` placeholder for the local creation date (`YYYY-MM-DD`).
 - Build with Go 1.27.2 to pick up standard-library security fixes in
   `net/http`, `net/textproto`, and `crypto/tls` reachable from `self-update`
   (GO-2026-6603, -6605, -6607, -6608, -6610, -6611, -6613, -6617).

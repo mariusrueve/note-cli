@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/mariusrueve/note-cli/internal/errs"
 )
@@ -199,5 +200,24 @@ func TestLookupCompletionAndJSON(t *testing.T) {
 	code, _, _ = execute(t, f, false, "", "open", "../escape")
 	if code != 2 {
 		t.Fatal(code)
+	}
+}
+func TestResearchTemplateDate(t *testing.T) {
+	f := setup(t)
+	var out, diagnostic bytes.Buffer
+	c := New(Options{Out: &out, Err: &diagnostic, Interactive: func() bool { return false }, Now: func() time.Time { return time.Date(2026, 1, 2, 23, 30, 0, 0, time.Local) }})
+	c.SetArgs([]string{"--config", f.cfg, "new", "lab/binding-assay", "--template", "experiment", "--no-open"})
+	if e := c.ExecuteContext(context.Background()); e != nil {
+		t.Fatal(e, diagnostic.String())
+	}
+	b, _ := os.ReadFile(filepath.Join(f.root, "lab", "binding-assay.md"))
+	if !strings.HasPrefix(string(b), "# Binding assay\n\nDate: 2026-01-02\n\n## Question\n") {
+		t.Fatalf("contents %q", b)
+	}
+	code, list, _ := execute(t, f, false, "", "templates")
+	for _, name := range []string{"experiment", "idea", "meeting", "paper"} {
+		if code != 0 || !strings.Contains(list, name) {
+			t.Fatal(code, name, list)
+		}
 	}
 }

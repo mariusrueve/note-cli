@@ -9,9 +9,9 @@ import (
 
 func TestTemplates(t *testing.T) {
 	dir := t.TempDir()
-	values := map[string]string{"title": "ECFP 日本語 {{slug}}", "slug": "ecfp", "path": "chem/ecfp.md"}
+	values := map[string]string{"title": "ECFP 日本語 {{slug}}", "slug": "ecfp", "path": "chem/ecfp.md", "date": "2026-10-12"}
 	list, e := List(dir)
-	if e != nil || len(list) != 4 {
+	if e != nil || len(list) != 8 {
 		t.Fatal(list, e)
 	}
 	for _, i := range list {
@@ -29,17 +29,20 @@ func TestTemplates(t *testing.T) {
 		if i.Name == "empty" && got != "" {
 			t.Fatalf("empty template: %q", got)
 		}
+		if dated := i.Name == "experiment" || i.Name == "meeting" || i.Name == "idea"; dated != strings.Contains(got, "Date: 2026-10-12\n") {
+			t.Fatalf("%s date: %q", i.Name, got)
+		}
 	}
-	src := `\{{title}} $PATH $E = mc^2$ {{title}} {{slug}} {{path}}`
+	src := `\{{title}} $PATH $E = mc^2$ {{title}} {{slug}} {{path}} {{date}}`
 	got, e := Render(src, values)
 	if e != nil {
 		t.Fatal(e)
 	}
-	want := `{{title}} $PATH $E = mc^2$ ECFP 日本語 {{slug}} ecfp chem/ecfp.md`
+	want := `{{title}} $PATH $E = mc^2$ ECFP 日本語 {{slug}} ecfp chem/ecfp.md 2026-10-12`
 	if got != want {
 		t.Fatalf("%q != %q", got, want)
 	}
-	for _, s := range []string{"{{bad}}", "{{ title }}", "{{title", "}}", "{{}}"} {
+	for _, s := range []string{"{{bad}}", "{{ title }}", "{{Date}}", "{{title", "}}", "{{}}"} {
 		if _, e = Render(s, values); e == nil {
 			t.Fatal("accepted malformed", s)
 		}
