@@ -71,12 +71,13 @@ Ordered by value and effort; implement one item per change.
 
 ### 4. Backlinks and dead links
 
-- [ ] `note backlinks PATH`: read-only, computed at invocation from ordinary
-  relative Markdown links (inline and reference style), with `--print`/`--json`
-  and the standard exit codes (1 when there are none).
-- [ ] `note links --check [--in DIR]`: report local link targets that do not
-  exist; anchors optional; no network access. Exit 1 when broken links exist.
-- [ ] No index, no wiki-links, no rewriting. Document in `docs/cli.md`.
+- [x] `note backlinks PATH`: read-only, computed at invocation from ordinary
+  relative Markdown links (inline and reference style), with `--print`/`--json`,
+  `--in DIR`, and the standard exit codes (1 when there are none).
+- [x] `note deadlinks [--in DIR]` (named instead of `links --check`): report local
+  link targets that do not exist with their exact spelling; no network access;
+  anchors are not checked. Exit 1 when broken links exist.
+- [x] No index, no wiki-links, no rewriting. Documented in `docs/cli.md`.
 
 ### 5. Zotero / Better BibTeX citations
 

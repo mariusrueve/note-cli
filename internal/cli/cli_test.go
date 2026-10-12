@@ -332,3 +332,39 @@ func TestInboxDefault(t *testing.T) {
 		t.Fatal("created through a symlinked inbox")
 	}
 }
+func TestBacklinksAndDeadlinks(t *testing.T) {
+	f := setup(t)
+	for p, s := range map[string]string{"chem/ecfp.md": "# ECFP\n", "index.md": "[ECFP](chem/ecfp.md)\n[gone](missing.md)\n", "phd/reading.md": "x\n[fp](../chem/ecfp.md)\n"} {
+		os.MkdirAll(filepath.Join(f.root, filepath.Dir(p)), 0755)
+		os.WriteFile(filepath.Join(f.root, p), []byte(s), 0600)
+	}
+	code, out, _ := execute(t, f, false, "", "backlinks", "chem/ecfp")
+	if code != 0 || out != "index.md:1:[ECFP](chem/ecfp.md)\nphd/reading.md:2:[fp](../chem/ecfp.md)\n" {
+		t.Fatalf("%d %q", code, out)
+	}
+	code, out, _ = execute(t, f, false, "", "backlinks", "chem/ecfp.md", "--in", "phd", "--json")
+	if code != 0 || out != `[{"path":"phd/reading.md","match_kinds":["link"],"line":2,"snippet":"[fp](../chem/ecfp.md)"}]`+"\n" {
+		t.Fatalf("%d %q", code, out)
+	}
+	for args, want := range map[string]int{"backlinks index": 1, "backlinks missing": 1, "backlinks ../x": 2, "backlinks a --print --json": 2, "deadlinks --in missing": 1} {
+		if code, _, _ := execute(t, f, false, "", strings.Fields(args)...); code != want {
+			t.Fatal(args, code, want)
+		}
+	}
+	code, out, _ = execute(t, f, false, "", "deadlinks")
+	if code != 1 || out != "index.md:2:missing.md (missing)\n" {
+		t.Fatalf("%d %q", code, out)
+	}
+	code, out, _ = execute(t, f, false, "", "deadlinks", "--json")
+	if code != 1 || !strings.Contains(out, `"snippet":"missing.md","problem":"missing"`) {
+		t.Fatalf("%d %q", code, out)
+	}
+	code, out, notice := execute(t, f, false, "", "deadlinks", "--in", "phd")
+	if code != 0 || out != "" || !strings.Contains(notice, "No broken links.") {
+		t.Fatalf("%d %q %q", code, out, notice)
+	}
+	code, out, _ = execute(t, f, false, "", "deadlinks", "--in", "phd", "--json")
+	if code != 0 || out != "[]\n" {
+		t.Fatalf("%d %q", code, out)
+	}
+}

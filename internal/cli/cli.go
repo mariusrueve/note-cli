@@ -17,6 +17,7 @@ import (
 
 	"github.com/mariusrueve/note-cli/internal/config"
 	"github.com/mariusrueve/note-cli/internal/errs"
+	"github.com/mariusrueve/note-cli/internal/links"
 	"github.com/mariusrueve/note-cli/internal/notes"
 	"github.com/mariusrueve/note-cli/internal/picker"
 	"github.com/mariusrueve/note-cli/internal/process"
@@ -241,6 +242,7 @@ func New(o Options) *cobra.Command {
 	for _, kind := range []string{"find", "grep", "search", "recent"} {
 		root.AddCommand(a.resultCommand(kind))
 	}
+	root.AddCommand(a.linkCommand("backlinks"), a.linkCommand("deadlinks"))
 	return root
 }
 func args(min, max int) cobra.PositionalArgs {
@@ -597,16 +599,90 @@ func (a *app) resultCommand(kind string) *cobra.Command {
 		if e != nil {
 			return e
 		}
-		if print || json || !a.Interactive() {
-			if e = search.Print(a.Out, kind, results, json); e != nil {
+		return a.emit(cmd.Context(), c, kind, results, print, json)
+	}
+	return cmd
+}
+
+// emit prints results headlessly or with --print/--json, and otherwise opens the picker.
+func (a *app) emit(ctx context.Context, c config.Config, kind string, results []search.Result, print, json bool) error {
+	if print || json || !a.Interactive() {
+		if e := search.Print(a.Out, kind, results, json); e != nil {
+			return e
+		}
+		if len(results) == 0 {
+			return errs.New(1, "no matches")
+		}
+		return nil
+	}
+	pick := kind
+	if kind == "backlinks" || kind == "deadlinks" {
+		pick = "grep"
+	}
+	return a.selectOpen(ctx, c, results, pick)
+}
+
+// linkCommand builds backlinks and deadlinks, which share output and scope flags.
+func (a *app) linkCommand(kind string) *cobra.Command {
+	cmd := &cobra.Command{Use: "backlinks PATH", Short: "List notes linking to a note", Args: args(1, 1), ValidArgsFunction: a.completePaths}
+	if kind == "deadlinks" {
+		cmd = &cobra.Command{Use: "deadlinks", Short: "Report local links whose target does not exist", Args: args(0, 0)}
+	}
+	var print, json bool
+	var in string
+	cmd.Flags().BoolVar(&print, "print", false, "Print human-readable results")
+	cmd.Flags().BoolVar(&json, "json", false, "Print a JSON array")
+	a.scopeFlag(cmd, &in)
+	cmd.RunE = func(cmd *cobra.Command, v []string) error {
+		if print && json {
+			return errs.New(2, "--print and --json are mutually exclusive")
+		}
+		if len(v) > 0 {
+			if e := notes.Syntax(v[0], false); e != nil {
 				return e
 			}
-			if len(results) == 0 {
-				return errs.New(1, "no matches")
-			}
-			return nil
 		}
-		return a.selectOpen(cmd.Context(), c, results, kind)
+		if e := scopeSyntax(cmd, in); e != nil {
+			return e
+		}
+		c, e := a.load()
+		if e != nil {
+			return e
+		}
+		scope, e := scopeDir(cmd, c, in)
+		if e != nil {
+			return e
+		}
+		var target search.Result
+		if kind == "backlinks" {
+			var exists bool
+			if target, exists, e = exact(c.Root, v[0]); e != nil {
+				return e
+			} else if !exists {
+				return errs.New(1, "note does not exist: %s", search.Visible(v[0]))
+			}
+		}
+		all, e := a.discover(cmd.Context(), c, scope)
+		if e != nil {
+			return e
+		}
+		if kind == "backlinks" {
+			return a.emit(cmd.Context(), c, kind, links.Backlinks(c.Root, all, target.Path, a.Err), print, json)
+		}
+		results := links.Dead(c.Root, all, a.Err)
+		if len(results) == 0 {
+			if !json {
+				fmt.Fprintln(a.Err, "No broken links.")
+			}
+			return search.Print(a.Out, kind, results, json)
+		}
+		if e = a.emit(cmd.Context(), c, kind, results, print, json); e != nil || print || json || !a.Interactive() {
+			if e == nil {
+				e = errs.New(1, "%d broken links", len(results))
+			}
+			return e
+		}
+		return nil
 	}
 	return cmd
 }

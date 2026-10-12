@@ -25,6 +25,12 @@ first interrupts the group, then removes any surviving descendants after waiting
 This also bounds hooks/wrappers that ignore SIGINT or keep output pipes open.
 `internal/errs` carries public exit codes with original errors.
 
+`internal/links` extracts ordinary relative Markdown links from discovered notes
+at invocation time for backlinks and dead-link checks. It is a deliberately small
+line scanner (inline links/images, reference definitions, fenced code, inline code
+spans), not a general Markdown parser, and keeps no index. Dead-link checks walk
+targets without following symlinks and compare exact directory-entry names.
+
 `internal/syncgit` handles dedicated-repository preflight, advisory locking,
 commit-first fetch/rebase, collision protection, and explicit upstream push.
 Recovery is Git's commits/index/operation state; there is no stash journal.
@@ -39,8 +45,8 @@ carry an archive distribution stamp; source/package builds cannot self-replace.
 filesystem installation to their hidden `__install` command. Update state lives
 in the XDG cache and beside the executable, separate from knowledge/config data.
 
-There are no package-init filesystem operations, index, database, daemon, Markdown
-parser, general extension system, or dependency-injection container. Seams are
+There are no package-init filesystem operations, index, database, daemon, general
+Markdown parser, general extension system, or dependency-injection container. Seams are
 limited to streams, terminal status, executable/home resolution, release HTTP
 transport, and clocks.
 Tests use temporary data and real subprocesses. Add general features at the

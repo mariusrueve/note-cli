@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `note backlinks PATH` and `note deadlinks`, computed from ordinary relative
+  Markdown links at invocation time. Dead-link checks require exact on-disk
+  spelling and exit 1 when broken links exist.
 - `note new` without PATH creates a capture note in the new `inbox_dir` setting
   (default `inbox`), named after `--title` or the local timestamp.
 - Add `--in DIR` to the picker, `note QUERY`, `open`, `find`, `grep`, `search`,

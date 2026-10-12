@@ -15,6 +15,8 @@ additional filtering in fzf is fuzzy.
 | `note find QUERY` | Paths only; `--case-sensitive`, `--print`, `--json`, `--in DIR` |
 | `note grep QUERY` | Contents only, one result per matching line; same options |
 | `note search QUERY` | Path/content union, one result per note with first content line; same options |
+| `note backlinks PATH` | Notes linking to an existing note, one result per link; `--print`, `--json`, `--in DIR` |
+| `note deadlinks` | Local links whose target is missing; exit 1 when any exist; `--print`, `--json`, `--in DIR` |
 | `note recent` | Newest mtime first, path order for ties; `--limit N` (20, positive), `--print`, `--json`, `--in DIR` |
 | `note templates` | Effective templates, sources, embedded overrides, default |
 | `note init` | Create config/root; `--root PATH` (`~/Knowledge`), `--editor EXECUTABLE` (`hx`) |
@@ -30,6 +32,30 @@ title has no ASCII letters or digits, the basename is the local time
 `YYYY-MM-DD-HHMMSS`; an untitled note's heading is `YYYY-MM-DD HH:MM:SS`. All
 existing-note rules apply unchanged (a same-second repeat returns 4 headlessly).
 File notes later with `mv` or `git mv`.
+
+Backlinks and deadlinks read ordinary Markdown links at invocation time; there is
+no index and nothing is rewritten. They recognize inline links and images
+(`[text](target)`, `![alt](target)`, `<target>` form, optional titles) and
+reference definitions (`[label]: target`), skipping fenced code blocks and inline
+code spans. URLs with a scheme, `//host` links, and anchor-only links are not
+local. Fragments and queries are ignored, percent-escapes are decoded, targets
+resolve relative to the linking note, and a leading `/` means the root. Wiki
+links are not recognized. Notes larger than 8 MiB are skipped with a warning.
+
+`backlinks PATH` takes the same literal path as `open`; a missing note exits 1,
+as do zero backlinks. `--in DIR` limits the linking notes. Printed lines are
+`path:line:source line`; in a terminal the picker opens the linking note at its line.
+
+`deadlinks` checks every local target, including attachments and directories,
+without following symlinks and with the exact on-disk spelling, so links that
+only work on case-insensitive filesystems are reported. Problems are `missing`,
+`case differs`, `outside root`, or `symlink`. Printed lines are
+`path:line:target (problem)`; JSON results carry the target as `snippet` and a
+`problem` field. `--in DIR` limits the notes checked, not the targets. Headless or
+with `--print`/`--json`, broken links exit 1 and none exit 0 (`[]` for JSON,
+`No broken links.` on stderr otherwise), so it suits scripts before `note sync`.
+In a terminal, broken links open the picker at the link. Both commands report
+`match_kinds` as `["link"]`.
 
 `--in DIR` limits the picker, `note QUERY`, find/grep/search, and recent to
 discoverable notes below a root-relative directory, e.g. `note search --in phd
