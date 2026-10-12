@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Configuration errors for unknown keys now name each key and its line, and
+  suggest updating `note` when the key comes from a newer version.
 - Add `note cite [KEY]` and `note new --cite KEY` for literature notes from a
   read-only BibTeX/BibLaTeX bibliography (e.g. a Zotero Better BibTeX export),
   new `bibliography` and `literature_dir` settings, and the `{{citekey}}`,
