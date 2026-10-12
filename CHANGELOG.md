@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `note cite [KEY]` and `note new --cite KEY` for literature notes from a
+  read-only BibTeX/BibLaTeX bibliography (e.g. a Zotero Better BibTeX export),
+  new `bibliography` and `literature_dir` settings, and the `{{citekey}}`,
+  `{{authors}}`, `{{year}}`, `{{doi}}`, and `{{url}}` placeholders used by `paper`.
 - Add `note backlinks PATH` and `note deadlinks`, computed from ordinary relative
   Markdown links at invocation time. Dead-link checks require exact on-disk
   spelling and exit 1 when broken links exist.

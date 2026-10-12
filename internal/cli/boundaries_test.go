@@ -52,13 +52,13 @@ func TestEditorPositionsAndMissingExecutable(t *testing.T) {
 		t.Fatal(recorded(t, f))
 	}
 	c.Editor = []string{"/missing-editor"}
-	if e := a.create(context.Background(), c, "not-created", "default", "", false, false, false); errs.Code(e) != 3 {
+	if e := a.create(context.Background(), c, "not-created", "default", "", false, false, false, nil); errs.Code(e) != 3 {
 		t.Fatal(e)
 	}
 	if _, e := os.Stat(filepath.Join(f.root, "not-created.md")); !os.IsNotExist(e) {
 		t.Fatal(e)
 	}
-	if e := a.create(context.Background(), c, "no-tools", "default", "", false, true, false); e != nil {
+	if e := a.create(context.Background(), c, "no-tools", "default", "", false, true, false, nil); e != nil {
 		t.Fatal(e)
 	}
 }

@@ -46,6 +46,9 @@ func TestConfig(t *testing.T) {
 		{"wrong tool", "root=\"kb\"\n[tools]\nrg=\"rg\"", true},
 		{"empty default", "root=\"kb\"\ndefault_template=\"\"", true},
 		{"relative templates", "root=\"kb\"\ntemplates_dir=\"../templates\"", false},
+		{"bibliography", "root=\"kb\"\nbibliography=\"~/My Library.bib\"\nliterature_dir=\"phd/lit/\"", false},
+		{"empty bibliography", "root=\"kb\"\nbibliography=\"\"", true},
+		{"escaping literature", "root=\"kb\"\nliterature_dir=\"../lit\"", true},
 		{"inbox", "root=\"kb\"\ninbox_dir=\"phd/inbox/\"", false},
 		{"empty inbox", "root=\"kb\"\ninbox_dir=\"\"", true},
 		{"escaping inbox", "root=\"kb\"\ninbox_dir=\"../inbox\"", true},
@@ -76,6 +79,12 @@ func TestConfig(t *testing.T) {
 				if c.InboxDir != "inbox" {
 					t.Fatal(c.InboxDir)
 				}
+			}
+			if tt.name == "bibliography" && (c.Bibliography != filepath.Join(h, "My Library.bib") || c.LiteratureDir != "phd/lit") {
+				t.Fatal(c.Bibliography, c.LiteratureDir)
+			}
+			if tt.name == "defaults" && (c.Bibliography != "" || c.LiteratureDir != "literature") {
+				t.Fatal(c.Bibliography, c.LiteratureDir)
 			}
 			if tt.name == "inbox" && c.InboxDir != "phd/inbox" {
 				t.Fatal(c.InboxDir)

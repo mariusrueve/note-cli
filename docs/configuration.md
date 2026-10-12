@@ -21,6 +21,11 @@ message `notes: sync {timestamp}`. Explicit `false` overrides settings correctly
 `inbox_dir` (default `inbox`) is the root-relative directory where `note new`
 without PATH creates capture notes; one trailing slash is allowed, and absolute
 paths, `..`, `.git`, and control characters are errors. It is created on first use.
+`bibliography` is an optional path to a BibTeX/BibLaTeX file, such as a Better
+BibTeX auto-export from Zotero (relative paths resolve against the config
+directory; `~` expands). It is only read, never modified. `literature_dir`
+(default `literature`) is the root-relative directory for `note cite` notes and
+follows the same rules as `inbox_dir`.
 Precedence is defaults, TOML, applicable CLI flags. `EDITOR` and `VISUAL` are not
 used. Executable availability is checked only when needed by the command.
 

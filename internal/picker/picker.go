@@ -65,16 +65,40 @@ func Pick(ctx context.Context, c config.Config, results []search.Result, kind, e
 		return search.Result{}, e
 	}
 	preview := Quote(executable) + " __preview --manifest " + Quote(f.Name()) + " --id {1}"
-	args := []string{"--read0", "--print0", "--delimiter=\t", "--with-nth=2..", "--nth=1..", "--no-multi", "--no-sort", "--query=", "--height=" + c.Finder.Height, "--preview-window=" + c.Finder.PreviewWindow, "--preview=" + preview}
-	var records bytes.Buffer
+	displays := make([]string, len(results))
 	for i, r := range results {
-		display := search.Visible(r.Path)
+		displays[i] = search.Visible(r.Path)
 		if kind == "grep" {
-			display += fmt.Sprintf(":%d: %s", *r.Line, search.Visible(*r.Snippet))
+			displays[i] += fmt.Sprintf(":%d: %s", *r.Line, search.Visible(*r.Snippet))
 		} else if kind == "search" {
-			display += " [" + strings.Join(r.MatchKinds, "+") + "]"
+			displays[i] += " [" + strings.Join(r.MatchKinds, "+") + "]"
 		}
-		fmt.Fprintf(&records, "%d\t%s%c", i+1, display, 0)
+	}
+	n, e := choose(ctx, c, displays, stderr, "--preview-window="+c.Finder.PreviewWindow, "--preview="+preview)
+	if e != nil {
+		return search.Result{}, e
+	}
+	r := results[n]
+	if _, e = notes.Safe(c.Root, r.Path, false); e != nil {
+		return search.Result{}, e
+	}
+	return r, nil
+}
+
+// Choose selects one of the already escaped display lines without a preview.
+func Choose(ctx context.Context, c config.Config, displays []string, stderr io.Writer) (int, error) {
+	if len(displays) == 0 {
+		return 0, errs.New(1, "nothing to select")
+	}
+	return choose(ctx, c, displays, stderr)
+}
+
+// choose runs fzf over numbered records and returns the selected zero-based index.
+func choose(ctx context.Context, c config.Config, displays []string, stderr io.Writer, extra ...string) (int, error) {
+	args := append([]string{"--read0", "--print0", "--delimiter=\t", "--with-nth=2..", "--nth=1..", "--no-multi", "--no-sort", "--query=", "--height=" + c.Finder.Height}, extra...)
+	var records bytes.Buffer
+	for i, d := range displays {
+		fmt.Fprintf(&records, "%d\t%s%c", i+1, d, 0)
 	}
 	cmd := process.Command(ctx, c.Tools.FZF, args...)
 	cmd.Dir = c.Root
@@ -83,29 +107,25 @@ func Pick(ctx context.Context, c config.Config, results []search.Result, kind, e
 	cmd.Stderr = stderr
 	b, e := cmd.Output()
 	if ctx.Err() != nil {
-		return search.Result{}, ctx.Err()
+		return 0, ctx.Err()
 	}
 	if e != nil {
 		code := process.ExitCode(e)
 		if code == 1 || code == 130 {
-			return search.Result{}, errs.New(130, "selection canceled")
+			return 0, errs.New(130, "selection canceled")
 		}
-		return search.Result{}, fmt.Errorf("fzf: %w", e)
+		return 0, fmt.Errorf("fzf: %w", e)
 	}
 	recordsOut := bytes.Split(b, []byte{0})
 	if len(recordsOut) != 2 || len(recordsOut[1]) != 0 {
-		return search.Result{}, fmt.Errorf("invalid fzf selection framing")
+		return 0, fmt.Errorf("invalid fzf selection framing")
 	}
 	id, _, ok := strings.Cut(string(recordsOut[0]), "\t")
 	n, e := strconv.Atoi(id)
-	if !ok || e != nil || n <= 0 || n > len(results) {
-		return search.Result{}, fmt.Errorf("invalid fzf selection ID")
+	if !ok || e != nil || n <= 0 || n > len(displays) {
+		return 0, fmt.Errorf("invalid fzf selection ID")
 	}
-	r := results[n-1]
-	if _, e = notes.Safe(c.Root, r.Path, false); e != nil {
-		return search.Result{}, e
-	}
-	return r, nil
+	return n - 1, nil
 }
 func Preview(manifest string, id int, w io.Writer) error {
 	f, e := os.Open(manifest)
