@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.2.0] - 2026-10-12
+
 - Configuration errors for unknown keys now name each key and its line, and
   suggest updating `note` when the key comes from a newer version.
 - Add `note cite [KEY]` and `note new --cite KEY` for literature notes from a

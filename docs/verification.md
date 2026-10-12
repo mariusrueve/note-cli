@@ -3,6 +3,18 @@
 Implementation and local checks performed on 2026-10-06, macOS ARM64.
 This records executed local checks and native GitHub Actions results.
 
+Version 0.2.0 preparation on 2026-10-12, macOS ARM64, Go 1.27.2:
+
+- Research templates, `--in DIR`, inbox capture, backlinks/deadlinks, and
+  `note cite` with `internal/bib` are covered by unit and CLI tests; all checks
+  below ran after rebasing onto the Go 1.27.2 lock update.
+- Local `check`, `-e go126 check`, `security` (no vulnerabilities found), and
+  `lint-workflows` passed. Main CI passed for the feature merge
+  ([mariusrueve/note-cli#5](https://github.com/mariusrueve/note-cli/pull/5)).
+- `note cite` was smoke-tested read-only against a real 116-entry Better BibTeX
+  export in a temporary root: every entry rendered without leftover braces or
+  escapes, and the bibliography checksum was unchanged.
+
 The release installation extension adds unit tests for stable version comparison,
 bounded release metadata/downloads, checksum and archive validation, gzip trailer
 corruption, managed receipts, symlink/ownership guards, lock contention, failure

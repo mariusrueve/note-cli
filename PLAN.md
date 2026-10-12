@@ -1,6 +1,7 @@
 # PLAN.md — `note` roadmap
 
-Status: v0.1.0 is published and verified on all four native targets (see
+Status: v0.1.0 is published and verified on all four native targets. Roadmap
+items 1–5 are implemented on main and prepared as 0.2.0 (see
 [verification](docs/verification.md)). Updated: 2026-10-12.
 
 The original v1 build specification is archived in
