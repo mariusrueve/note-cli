@@ -108,18 +108,17 @@ Ordered by value and effort; implement one item per change.
 
 ### 8. `note move OLD NEW` with link updates
 
-- [ ] Literal OLD, normalized NEW (trailing `/` keeps the basename); never
+- [x] Literal OLD, normalized NEW (trailing `/` keeps the basename); never
   overwrite (exit 4); same path-safety rules as other commands.
-- [ ] Rewrite inbound links in discovered notes and the moved note's own relative
+- [x] Rewrite inbound links in discovered notes and the moved note's own relative
   links, preserving link form, fragments, and queries; `--dry-run` and `--json`.
-- [ ] Hard-link-then-remove move, temp-file rewrites, and exact reporting of
+- [x] Hard-link-then-remove move, temp-file rewrites, and exact reporting of
   partial failures; Git remains the recovery path.
 
 ## Later extensions
 
 Unprioritized; each needs its own specification first.
 
-- Rename with relative-link updates.
 - Markdown lint/format integration (mutating only when requested).
 - Read-only Git status and clearer conflict diagnostics.
 - Editor adapters for line jumps beyond the current editors.

@@ -23,6 +23,15 @@ type Link struct {
 	Text   string // the source line, for snippets
 	Target string // the target as written
 	Rel    string // root-relative resolution without fragment/query; "" when outside the root
+	// Start and End are the byte offsets of Target within Text; Angle marks <target> form.
+	Start, End int
+	Angle      bool
+}
+
+// span locates a link target within a line.
+type span struct {
+	start, end int
+	angle      bool
 }
 
 var (
@@ -52,15 +61,20 @@ func Extract(from, src string) []Link {
 				continue
 			}
 		}
-		var targets []string
-		if m := reference.FindStringSubmatch(line); m != nil {
-			targets = append(targets, strings.TrimSuffix(strings.TrimPrefix(m[1], "<"), ">"))
+		var spans []span
+		if m := reference.FindStringSubmatchIndex(line); m != nil {
+			sp := span{m[2], m[3], false}
+			if line[sp.start] == '<' {
+				sp = span{sp.start + 1, sp.end - 1, true}
+			}
+			spans = append(spans, sp)
 		} else {
-			targets = inline(stripCode(line))
+			spans = inline(stripCode(line))
 		}
-		for _, t := range targets {
+		for _, sp := range spans {
+			t := line[sp.start:sp.end]
 			if rel, local := resolve(from, t); local {
-				out = append(out, Link{Line: n + 1, Text: line, Target: t, Rel: rel})
+				out = append(out, Link{Line: n + 1, Text: line, Target: t, Rel: rel, Start: sp.start, End: sp.end, Angle: sp.angle})
 			}
 		}
 	}
@@ -118,9 +132,9 @@ func closing(b []byte, from, n int) int {
 	return -1
 }
 
-// inline returns the destinations of [text](dest) and ![alt](dest) on a line.
-func inline(s string) []string {
-	var out []string
+// inline locates the destinations of [text](dest) and ![alt](dest) on a line.
+func inline(s string) []span {
+	var out []span
 	for i := 0; ; {
 		k := strings.Index(s[i:], "](")
 		if k < 0 {
@@ -137,7 +151,7 @@ func inline(s string) []string {
 				i = j
 				continue
 			}
-			out = append(out, s[j+1:j+1+end])
+			out = append(out, span{j + 1, j + 1 + end, true})
 			i = j + 1 + end
 			continue
 		}
@@ -160,7 +174,7 @@ func inline(s string) []string {
 			j = len(s)
 		}
 		if j > start {
-			out = append(out, s[start:j])
+			out = append(out, span{start, j, false})
 		}
 		i = j
 	}

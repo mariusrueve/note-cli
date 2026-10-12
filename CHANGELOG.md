@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `note move OLD NEW` (with `--dry-run` and `--json`) to move a note without
+  overwriting and update relative links to and from it.
 - The `note cite` picker marks entries that already have a literature note and
   previews title, authors, year, venue, DOI, URL, and abstract.
 - Add `{{venue}}` (journal, book title, publisher, or e-print type) and

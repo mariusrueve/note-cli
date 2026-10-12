@@ -1,7 +1,9 @@
 package notes
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,6 +65,37 @@ func Safe(root, rel string, missing bool) (string, error) {
 		}
 	}
 	return abs, nil
+}
+
+// Move renames a note without ever replacing an existing file: it hard-links
+// the new name, which fails if anything exists there, then removes the old one.
+func Move(root, oldRel, newRel string) error {
+	oldAbs, e := Safe(root, oldRel, false)
+	if e != nil {
+		return e
+	}
+	newAbs, e := Safe(root, newRel, true)
+	if e != nil {
+		return e
+	}
+	if e = os.MkdirAll(filepath.Dir(newAbs), 0777); e != nil {
+		return e
+	}
+	// Recheck after creating parents so no component became a symlink.
+	if _, e = Safe(root, newRel, true); e != nil {
+		return e
+	}
+	if e = os.Link(oldAbs, newAbs); e != nil {
+		if errors.Is(e, fs.ErrExist) {
+			return errs.New(4, "destination already exists: %s", newRel)
+		}
+		return fmt.Errorf("move %s: %w (both paths must be on one filesystem that supports hard links)", oldRel, e)
+	}
+	if e = os.Remove(oldAbs); e != nil {
+		os.Remove(newAbs)
+		return fmt.Errorf("move %s: %w", oldRel, e)
+	}
+	return nil
 }
 
 // DirSyntax accepts a root-relative directory, allowing one trailing slash.
