@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Build with Go 1.27.2 to pick up standard-library security fixes in
+  `net/http`, `net/textproto`, and `crypto/tls` reachable from `self-update`
+  (GO-2026-6603, -6605, -6607, -6608, -6610, -6611, -6613, -6617).
+
 ## [0.1.0] - 2026-10-06
 
 - Add a checksum-verified macOS/Linux release installer, explicit `self-update`

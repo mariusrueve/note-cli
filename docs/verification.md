@@ -46,12 +46,25 @@ tooling and build/cache data live under ignored `work/`, outside the runtime des
 Official Go/fzf downloads were checksum-verified.
 
 The production-readiness follow-up adds Pixi 0.72.0 with a checked-in four-platform
-lock. Local checks use its Go 1.27.1/1.26.7, Git 2.56.0, rg 15.2.0, fzf 0.74.4,
+lock. Local checks use its Go 1.27.2/1.26.7, Git 2.56.0, rg 15.2.0, fzf 0.74.4,
 and Fish 4.9.3 environments. Updated module dependencies passed the official
 govulncheck scan. The added automated PTY checks exercise real preview rendering,
 selection/editor handoff, creation, existing-note preservation, and Ctrl-C.
 Release archives now include a checksummed build/dependency record, and clean
 source is required for versioned builds. Workflow lint passes locally.
+
+On 2026-10-12 the locked Go 1.27 toolchain moved from 1.27.1 to 1.27.2 on all
+four platforms for standard-library fixes (GO-2026-6603, -6605, -6607, -6608,
+-6610, -6611, -6613, -6617) reachable through the self-update HTTP client. On
+macOS ARM64, `pixi install --locked`, both environments' `check`, `security`, and
+`lint-workflows` passed; govulncheck reports no vulnerabilities for Go 1.27.2.
+The Go 1.26 compatibility environment stays on 1.26.7, the newest conda-forge
+1.26 build at that date; govulncheck still reports these fixes (released in
+Go 1.26.9) as reachable there. Release builds and the CI security job use the
+default Go 1.27 environment. The
+[CI run](https://github.com/mariusrueve/note-cli/actions/runs/38297227124) for
+commit `ab5bb7191ecc516a63d1d323a06fc05805044d97` passed on 2026-10-12 with
+Pixi 0.72.0, including all native jobs, vulnerability scanning, and workflow lint.
 
 Completed checks:
 
