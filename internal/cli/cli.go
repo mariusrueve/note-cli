@@ -241,6 +241,12 @@ func New(o Options) *cobra.Command {
 	preview.Flags().StringVar(&manifest, "manifest", "", "Manifest path")
 	preview.Flags().IntVar(&id, "id", 0, "Record ID")
 	preview.RunE = func(_ *cobra.Command, _ []string) error { return picker.Preview(manifest, id, a.Out) }
+	previewText := &cobra.Command{Use: "__preview-text", Hidden: true, Args: args(0, 0)}
+	var textManifest string
+	var textID int
+	previewText.Flags().StringVar(&textManifest, "manifest", "", "Manifest path")
+	previewText.Flags().IntVar(&textID, "id", 0, "Record ID")
+	previewText.RunE = func(_ *cobra.Command, _ []string) error { return picker.PreviewText(textManifest, textID, a.Out) }
 	doctor := &cobra.Command{Use: "doctor", Short: "Check configuration, tools, directories, bibliography, and Git readiness", Args: args(0, 0), RunE: func(cmd *cobra.Command, _ []string) error { return a.doctor(cmd.Context()) }}
 	syncCmd := &cobra.Command{Use: "sync", Short: "Commit, fetch/rebase, and push a dedicated knowledge repository", Args: args(0, 0)}
 	var message string
@@ -259,7 +265,7 @@ func New(o Options) *cobra.Command {
 		}
 		return syncgit.Run(cmd.Context(), c, syncgit.Options{In: a.In, Err: a.Err, Message: override})
 	}
-	root.AddCommand(initCmd, open, newCmd, tmpl, completion, preview, doctor, syncCmd, a.citeCommand())
+	root.AddCommand(initCmd, open, newCmd, tmpl, completion, preview, previewText, doctor, syncCmd, a.citeCommand())
 	root.AddCommand(a.updateCommand(), a.installCommand())
 	for _, kind := range []string{"find", "grep", "search", "recent"} {
 		root.AddCommand(a.resultCommand(kind))
@@ -847,11 +853,17 @@ func (a *app) citeCommand() *cobra.Command {
 				return e
 			}
 			displays := make([]string, len(entries))
+			previews := make([]string, len(entries))
 			for i, x := range entries {
 				values := x.Values()
-				displays[i] = search.Visible(fmt.Sprintf("%s  %s  %s  %s", x.Key, values["year"], truncate(values["authors"], 40), values["title"]))
+				mark := " "
+				if a.hasLiteratureNote(c, x.Key) {
+					mark = "✓"
+				}
+				displays[i] = search.Visible(fmt.Sprintf("%s %s  %s  %s  %s", mark, x.Key, values["year"], truncate(values["authors"], 40), values["title"]))
+				previews[i] = citationPreview(values)
 			}
-			n, e := picker.Choose(cmd.Context(), c, displays, a.Err)
+			n, e := picker.ChooseWithPreview(cmd.Context(), c, displays, previews, a.Executable, a.Err)
 			if e != nil {
 				return e
 			}
@@ -860,6 +872,28 @@ func (a *app) citeCommand() *cobra.Command {
 		return a.create(cmd.Context(), c, c.LiteratureDir+"/"+entry.Key, template, "", false, noOpen, true, entry.Values())
 	}
 	return cmd
+}
+
+// hasLiteratureNote reports whether cite would open an existing note for key.
+func (a *app) hasLiteratureNote(c config.Config, key string) bool {
+	rel, e := notes.NewPath(c.LiteratureDir + "/" + key)
+	if e != nil {
+		return false
+	}
+	_, exists, e := notes.Collision(c.Root, rel)
+	return e == nil && exists
+}
+func citationPreview(v map[string]string) string {
+	lines := []string{v["title"], v["authors"], strings.Trim(v["year"]+" · "+v["venue"], " ·")}
+	for _, f := range []string{"doi", "url"} {
+		if v[f] != "" {
+			lines = append(lines, strings.ToUpper(f)+": "+v[f])
+		}
+	}
+	if v["abstract"] != "" {
+		lines = append(lines, "", v["abstract"])
+	}
+	return strings.Join(lines, "\n")
 }
 func truncate(s string, n int) string {
 	if r := []rune(s); len(r) > n {

@@ -102,8 +102,8 @@ Ordered by value and effort; implement one item per change.
 
 ### 7. Better cite picker
 
-- [ ] Mark entries that already have a literature note.
-- [ ] Preview title, authors, year, venue, DOI, and abstract while choosing,
+- [x] Mark entries that already have a literature note.
+- [x] Preview title, authors, year, venue, DOI, and abstract while choosing,
   through a bounded hidden preview helper like the note picker's.
 
 ### 8. `note move OLD NEW` with link updates

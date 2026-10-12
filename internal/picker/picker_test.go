@@ -164,3 +164,36 @@ func TestPreviewBudgetAndValidation(t *testing.T) {
 		t.Fatal("preview rewrote invalid text")
 	}
 }
+func TestChooseWithPreviewAndPreviewText(t *testing.T) {
+	if _, e := exec.LookPath("fzf"); e != nil {
+		t.Fatal("integration tests require fzf:", e)
+	}
+	tmp := t.TempDir()
+	t.Setenv("TMPDIR", tmp)
+	c := config.Config{Tools: config.Tools{FZF: []string{"fzf", "--filter=second"}}, Finder: config.Finder{Height: "90%", PreviewWindow: "right:60%:wrap"}}
+	n, e := ChooseWithPreview(context.Background(), c, []string{"first", "second"}, []string{"a", "b"}, "/installed/note", io.Discard)
+	if e != nil || n != 1 {
+		t.Fatal(n, e)
+	}
+	if entries, _ := os.ReadDir(tmp); len(entries) != 0 {
+		t.Fatal("manifest leaked", entries)
+	}
+	if _, e = ChooseWithPreview(context.Background(), c, []string{"x"}, nil, "", io.Discard); errs.Code(e) != 1 {
+		t.Fatal(e)
+	}
+	manifest := filepath.Join(t.TempDir(), "m.json")
+	os.WriteFile(manifest, []byte(`{"schema_version":1,"texts":["Title\nctrl\u001b[31m","two"]}`), 0600)
+	var b bytes.Buffer
+	if e = PreviewText(manifest, 1, &b); e != nil || b.String() != "Title\nctrl\\u{001b}[31m\n" {
+		t.Fatalf("%q %v", b.String(), e)
+	}
+	for _, body := range []string{`{"schema_version":2,"texts":["a"]}`, `{"schema_version":1,"texts":["a"],"x":1}`, `{"schema_version":1,"texts":["a"]} {}`, `{"schema_version":1,"texts":[]}`} {
+		os.WriteFile(manifest, []byte(body), 0600)
+		if e = PreviewText(manifest, 1, io.Discard); e == nil {
+			t.Fatal("accepted", body)
+		}
+	}
+	if e = PreviewText(manifest+".missing", 1, io.Discard); e == nil {
+		t.Fatal("missing manifest")
+	}
+}
