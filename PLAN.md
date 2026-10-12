@@ -93,6 +93,29 @@ Ordered by value and effort; implement one item per change.
   `{{title}}` comes from the entry unless `--title` is given. Empty when absent.
 - [x] Documented in `docs/templates.md`, `docs/configuration.md`, and `docs/cli.md`.
 
+## Roadmap for 0.3.0
+
+### 6. More citation fields
+
+- [x] `{{venue}}` (first of `journaltitle`, `journal`, `booktitle`, `publisher`,
+  `eprinttype`) and `{{abstract}}` (cleaned, one line); `paper` shows the venue,
+  and the abstract stays opt-in for user templates.
+
+### 7. Better cite picker
+
+- [ ] Mark entries that already have a literature note.
+- [ ] Preview title, authors, year, venue, DOI, and abstract while choosing,
+  through a bounded hidden preview helper like the note picker's.
+
+### 8. `note move OLD NEW` with link updates
+
+- [ ] Literal OLD, normalized NEW (trailing `/` keeps the basename); never
+  overwrite (exit 4); same path-safety rules as other commands.
+- [ ] Rewrite inbound links in discovered notes and the moved note's own relative
+  links, preserving link form, fragments, and queries; `--dry-run` and `--json`.
+- [ ] Hard-link-then-remove move, temp-file rewrites, and exact reporting of
+  partial failures; Git remains the recovery path.
+
 ## Later extensions
 
 Unprioritized; each needs its own specification first.

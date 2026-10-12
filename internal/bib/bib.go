@@ -317,13 +317,21 @@ func (e Entry) Values() map[string]string {
 	if d := strings.TrimSpace(e.Fields["date"]); year == "" && len(d) >= 4 {
 		year = d[:4]
 	}
+	venue := ""
+	for _, f := range []string{"journaltitle", "journal", "booktitle", "publisher", "eprinttype"} {
+		if venue = Clean(e.Fields[f]); venue != "" {
+			break
+		}
+	}
 	return map[string]string{
-		"citekey": e.Key,
-		"title":   Clean(e.Fields["title"]),
-		"authors": Authors(e.Fields["author"]),
-		"year":    year,
-		"doi":     strings.TrimSpace(e.Fields["doi"]),
-		"url":     strings.TrimSpace(e.Fields["url"]),
+		"citekey":  e.Key,
+		"venue":    venue,
+		"abstract": Clean(e.Fields["abstract"]),
+		"title":    Clean(e.Fields["title"]),
+		"authors":  Authors(e.Fields["author"]),
+		"year":     year,
+		"doi":      strings.TrimSpace(e.Fields["doi"]),
+		"url":      strings.TrimSpace(e.Fields["url"]),
 	}
 }
 
