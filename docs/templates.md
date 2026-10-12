@@ -7,7 +7,7 @@ adds Overview, Details, Sources. Empty produces zero bytes.
 
 | Template | Sections after the title |
 | --- | --- |
-| `paper` | Citation (key, authors, year, DOI, URL), Summary, Contributions, Methods, Relevance, Questions and critique |
+| `paper` | Citation (key, authors, year, venue, DOI, URL), Summary, Contributions, Methods, Relevance, Questions and critique |
 | `experiment` | `Date:` line, Question, Setup, Procedure, Results, Interpretation, Next steps |
 | `meeting` | `Date:` and `Attendees:` lines, Agenda, Notes, Decisions, Action items |
 | `idea` | `Date:` line, Idea, Why it matters, First step |
@@ -22,11 +22,14 @@ sources, overrides, and the configured default. `--template` takes precedence
 over `default_template`. Explicit missing/invalid templates are errors.
 
 Only `{{title}}`, `{{slug}}`, `{{path}}`, `{{date}}`, and the citation
-placeholders `{{citekey}}`, `{{authors}}`, `{{year}}`, `{{doi}}`, and `{{url}}` are
-supported. `{{date}}` is the local creation date as `YYYY-MM-DD`. Citation
+placeholders `{{citekey}}`, `{{authors}}`, `{{year}}`, `{{venue}}`, `{{doi}}`,
+`{{url}}`, and `{{abstract}}` are supported. `{{date}}` is the local creation date as `YYYY-MM-DD`. Citation
 placeholders are filled by `note cite` and `note new --cite` from the configured
 bibliography and are empty otherwise. `{{authors}}` lists names as
 `First Last, …`; `{{year}}` uses `year` or the first four characters of `date`;
+`{{venue}}` is the first of `journaltitle`, `journal`, `booktitle`, `publisher`,
+or `eprinttype`; `{{abstract}}` is the cleaned abstract on one line and is not
+used by the built-in `paper` template, so add it only to your own templates;
 `{{title}}` is the entry title unless `--title` is given. Titles and names lose
 protective braces and common LaTeX escapes/accents; DOI and URL are verbatim. Values are inserted once
 without evaluation. Unknown/malformed placeholders fail before note creation.

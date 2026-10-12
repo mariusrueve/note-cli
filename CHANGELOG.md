@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `{{venue}}` (journal, book title, publisher, or e-print type) and
+  `{{abstract}}` citation placeholders; the `paper` template shows the venue.
+
 ## [0.2.0] - 2026-10-12
 
 - `note doctor` reports the inbox and literature directories and the

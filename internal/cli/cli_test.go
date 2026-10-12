@@ -371,7 +371,7 @@ func TestBacklinksAndDeadlinks(t *testing.T) {
 func TestCitations(t *testing.T) {
 	f := setup(t)
 	bibFile := filepath.Join(t.TempDir(), "My Library.bib")
-	source := "@article{rogersExtendedConnectivity2010,\n  title = {Extended-{{Connectivity Fingerprints}}},\n  author = {Rogers, David and Hahn, Mathew},\n  date = {2010-05-24},\n  doi = {10.1021/ci100050t},\n  url = {https://example.org/ecfp}\n}\n@online{noAscii, title = {日本語}}\n"
+	source := "@article{rogersExtendedConnectivity2010,\n  title = {Extended-{{Connectivity Fingerprints}}},\n  author = {Rogers, David and Hahn, Mathew},\n  date = {2010-05-24},\n  journaltitle = {J. Chem. Inf. Model.},\n  doi = {10.1021/ci100050t},\n  url = {https://example.org/ecfp}\n}\n@online{noAscii, title = {日本語}}\n"
 	os.WriteFile(bibFile, []byte(source), 0400)
 	// Without a configured bibliography, citing is a configuration error.
 	if code, _, _ := execute(t, f, false, "", "cite", "rogersExtendedConnectivity2010"); code != 3 {
@@ -385,7 +385,7 @@ func TestCitations(t *testing.T) {
 	}
 	p := filepath.Join(f.root, "literature", "rogersextendedconnectivity2010.md")
 	got, _ := os.ReadFile(p)
-	want := "# Extended-Connectivity Fingerprints\n\n## Citation\n\n- Key: rogersExtendedConnectivity2010\n- Authors: David Rogers, Mathew Hahn\n- Year: 2010\n- DOI: 10.1021/ci100050t\n- URL: https://example.org/ecfp\n\n## Summary\n"
+	want := "# Extended-Connectivity Fingerprints\n\n## Citation\n\n- Key: rogersExtendedConnectivity2010\n- Authors: David Rogers, Mathew Hahn\n- Year: 2010\n- Venue: J. Chem. Inf. Model.\n- DOI: 10.1021/ci100050t\n- URL: https://example.org/ecfp\n\n## Summary\n"
 	if !strings.HasPrefix(string(got), want) {
 		t.Fatalf("%q", got)
 	}

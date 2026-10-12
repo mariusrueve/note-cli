@@ -439,7 +439,7 @@ func (a *app) create(ctx context.Context, c config.Config, input, template, titl
 			title = cite["title"]
 		}
 	}
-	values := map[string]string{"citekey": "", "authors": "", "year": "", "doi": "", "url": ""}
+	values := map[string]string{"citekey": "", "authors": "", "year": "", "doi": "", "url": "", "venue": "", "abstract": ""}
 	for k, v := range cite {
 		values[k] = v
 	}

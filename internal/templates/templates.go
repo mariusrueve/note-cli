@@ -77,7 +77,7 @@ func Load(dir, name string) (string, error) {
 }
 
 // placeholders are the only names Render accepts; values are inserted literally.
-var placeholders = map[string]bool{"title": true, "slug": true, "path": true, "date": true, "citekey": true, "authors": true, "year": true, "doi": true, "url": true}
+var placeholders = map[string]bool{"title": true, "slug": true, "path": true, "date": true, "citekey": true, "authors": true, "year": true, "doi": true, "url": true, "venue": true, "abstract": true}
 
 func Render(src string, values map[string]string) (string, error) {
 	var b strings.Builder

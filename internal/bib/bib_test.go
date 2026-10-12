@@ -16,6 +16,8 @@ const sample = `% Exported by a bibliography manager
   author = {Rogers, David and Hahn, Mathew and {Open Science Consortium} and M{\"u}ller, J{\"o}rg and Fran\c{c}ois, {\'E}mile and Dvo\v{r}{\'a}k, Anton\'{\i}n and Stra\ss{}e, Anna and King, Jr, Martin},
   date = {2010-05-24},
   journaltitle = jcim # " (online)",
+  abstract = {We describe {{ECFP}}\ldots{} in
+    two lines.},
   doi = {10.1021/ci100050t},
   url = {https://example.org/a_b%20c~d},
   pages = {742--754}
@@ -43,12 +45,14 @@ func TestParseAndValues(t *testing.T) {
 	}
 	got := entries[0].Values()
 	want := map[string]string{
-		"citekey": "rogersExtendedConnectivityFingerprints2010",
-		"title":   "Extended-Connectivity Fingerprints: A Tool & Its 100% Use",
-		"authors": "David Rogers, Mathew Hahn, Open Science Consortium, Jörg Müller, Émile François, Antonín Dvořák, Anna Straße, Martin King Jr",
-		"year":    "2010",
-		"doi":     "10.1021/ci100050t",
-		"url":     "https://example.org/a_b%20c~d",
+		"citekey":  "rogersExtendedConnectivityFingerprints2010",
+		"title":    "Extended-Connectivity Fingerprints: A Tool & Its 100% Use",
+		"authors":  "David Rogers, Mathew Hahn, Open Science Consortium, Jörg Müller, Émile François, Antonín Dvořák, Anna Straße, Martin King Jr",
+		"year":     "2010",
+		"doi":      "10.1021/ci100050t",
+		"url":      "https://example.org/a_b%20c~d",
+		"venue":    "jcim (online)",
+		"abstract": "We describe ECFP in two lines.",
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("got  %q\nwant %q", got, want)
@@ -58,6 +62,15 @@ func TestParseAndValues(t *testing.T) {
 	}
 	if v := entries[1].Values(); v["title"] != "[2206.12411] Sample ~ Matters" || v["year"] != "2022" || v["authors"] != "Jane Doe" {
 		t.Fatal(v)
+	}
+	if v := entries[1].Values(); v["venue"] != "" || v["abstract"] != "" {
+		t.Fatal(v)
+	}
+	for fields, want := range map[string]string{"journal = {J}, booktitle = {B}": "J", "booktitle = {B}, publisher = {P}": "B", "publisher = {P}, eprinttype = {arXiv}": "P", "eprinttype = {arXiv}": "arXiv"} {
+		e, err := Parse("@misc{k, " + fields + "}")
+		if err != nil || e[0].Values()["venue"] != want {
+			t.Fatal(fields, e, err)
+		}
 	}
 	if v := entries[2].Values(); v["authors"] != "" || v["year"] != "" || v["title"] != "No Authors" {
 		t.Fatal(v)

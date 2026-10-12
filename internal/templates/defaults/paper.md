@@ -5,6 +5,7 @@
 - Key: {{citekey}}
 - Authors: {{authors}}
 - Year: {{year}}
+- Venue: {{venue}}
 - DOI: {{doi}}
 - URL: {{url}}
 
