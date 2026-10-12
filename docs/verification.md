@@ -15,6 +15,14 @@ Version 0.2.0 preparation on 2026-10-12, macOS ARM64, Go 1.27.2:
   tests. Real-fzf PTY tests now also cover the citation picker (creation and
   editor), the backlinks picker (opening the linking note), and deadlinks
   cancellation; they pass locally and also run against archived binaries.
+- Public release verification completed on 2026-10-13: [main CI](https://github.com/mariusrueve/note-cli/actions/runs/38312890305)
+  passed for release commit `48128078b665280e28b76a4f88638a41c7e3b6e9`, and the
+  [tag-triggered release run](https://github.com/mariusrueve/note-cli/actions/runs/38312905893)
+  revalidated and published [v0.2.0](https://github.com/mariusrueve/note-cli/releases/tag/v0.2.0)
+  with four archives, `checksums.txt`, `install.sh`, and `build-info.json`. The
+  public installer, downloaded without authentication, installed 0.2.0 with a
+  verified checksum, and `note self-update` updated a real 0.1.0 release
+  installation to 0.2.0 on macOS ARM64.
 - `note cite` was smoke-tested read-only against a real 116-entry Better BibTeX
   export in a temporary root: every entry rendered without leftover braces or
   escapes, and the bibliography checksum was unchanged.
