@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pixi install --locked)",
+      "Bash(pixi run --locked check)",
+      "Bash(pixi run --locked -e go126 check)",
+      "Bash(pixi run --locked test)",
+      "Bash(pixi run --locked fmt)",
+      "Bash(pixi run --locked fmt-check)",
+      "Bash(pixi run --locked build)",
+      "Bash(pixi run --locked security)",
+      "Bash(pixi run --locked lint-workflows)",
+      "Bash(pixi run --locked go test:*)",
+      "Bash(pixi run --locked go vet:*)",
+      "Bash(pixi run --locked go run ./cmd/note:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)"
+    ]
+  }
+}

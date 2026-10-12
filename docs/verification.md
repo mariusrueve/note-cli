@@ -128,7 +128,7 @@ GitHub Actions verification:
   bounded cancellation, preserved commits, released locks, and Git recovery.
 
 The native completion, preview, installation, archive and final acceptance
-checkboxes in PLAN.md are complete. The initial production-readiness checkpoint
+checkboxes in the [v1 specification](history/v1-spec.md) are complete. The initial production-readiness checkpoint
 prepared the source and verified archives for the first 0.1.0 release. The Release workflow repeats every gate for versioned
 archives; manual dispatch validates without publishing, and a version tag
 publishes only after success. Publication was subsequently explicitly authorized

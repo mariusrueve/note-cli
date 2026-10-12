@@ -55,4 +55,4 @@ executables. Ordinary Go users can still run `make check`, `make build`, and
 
 Read [architecture](docs/architecture.md), [CLI](docs/cli.md), AGENTS.md, and
 [releasing](docs/releasing.md). Update docs, CHANGELOG, and tests when changing
-public behavior. Keep PLAN.md and [verification](docs/verification.md) accurate.
+public behavior. Keep the roadmap in PLAN.md and [verification](docs/verification.md) accurate.

@@ -35,3 +35,6 @@ go.work.sum
 # Local tools, builds, test reports, and release snapshots
 /work/
 /.pixi/
+
+# Local Claude Code settings
+/.claude/settings.local.json

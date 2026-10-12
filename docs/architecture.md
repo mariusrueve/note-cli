@@ -52,4 +52,5 @@ protect normal concurrent creation; symlinks and containment are rechecked befor
 creation/opening.
 
 The actual Git origin supplies the module address, and the existing MIT license
-supplies copyright metadata. This resolves the plan's original placeholders.
+supplies copyright metadata. This resolves the original v1 specification's placeholders
+([history/v1-spec.md](history/v1-spec.md)).
