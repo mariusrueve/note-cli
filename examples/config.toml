@@ -4,6 +4,8 @@ root = "~/Knowledge"
 editor = "hx"
 default_template = "default"
 inbox_dir = "inbox" # root-relative; used by note new without PATH
+# bibliography = "~/My Library.bib" # Better BibTeX auto-export; read only
+literature_dir = "literature" # root-relative; used by note cite
 # editor = ["code", "--wait", "--reuse-window"]
 # templates_dir = "./templates" # relative to this config file
 

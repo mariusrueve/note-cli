@@ -15,6 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/mariusrueve/note-cli/internal/bib"
 	"github.com/mariusrueve/note-cli/internal/config"
 	"github.com/mariusrueve/note-cli/internal/errs"
 	"github.com/mariusrueve/note-cli/internal/links"
@@ -149,18 +150,24 @@ func New(o Options) *cobra.Command {
 	}}
 	a.scopeFlag(open, &openIn)
 	newCmd := &cobra.Command{Use: "new [PATH]", Short: "Create a note exclusively and open it; without PATH, in the inbox", Args: args(0, 1), ValidArgsFunction: a.completePaths}
-	var template, title string
+	var template, title, citeKey string
 	var noOpen, openExisting bool
 	newCmd.Flags().StringVar(&template, "template", "", "Template name")
 	newCmd.Flags().StringVar(&title, "title", "", "Heading title (preserves Unicode)")
 	newCmd.Flags().BoolVar(&noOpen, "no-open", false, "Create without opening an editor")
 	newCmd.Flags().BoolVar(&openExisting, "open-existing", false, "Explicitly open an existing note without prompting")
+	newCmd.Flags().StringVar(&citeKey, "cite", "", "Fill the template from this bibliography entry (default template: paper)")
 	newCmd.RunE = func(cmd *cobra.Command, v []string) error {
 		if cmd.Flags().Changed("template") && !config.Identifier(template) {
 			return errs.New(2, "invalid template identifier")
 		}
 		if noOpen && openExisting {
 			return errs.New(2, "--no-open and --open-existing are mutually exclusive")
+		}
+		if cmd.Flags().Changed("cite") {
+			if e := citekey(citeKey); e != nil {
+				return e
+			}
 		}
 		if len(v) > 0 {
 			if _, e := notes.NewPath(v[0]); e != nil {
@@ -172,14 +179,29 @@ func New(o Options) *cobra.Command {
 			return e
 		}
 		explicitTitle := cmd.Flags().Changed("title")
+		var cite map[string]string
+		if cmd.Flags().Changed("cite") {
+			entry, e := a.citation(c, citeKey)
+			if e != nil {
+				return e
+			}
+			cite = entry.Values()
+			if template == "" {
+				template = "paper"
+			}
+			if len(v) == 0 {
+				v = append(v, c.LiteratureDir+"/"+entry.Key)
+			}
+		}
 		if len(v) == 0 {
 			var input string
 			input, title, explicitTitle = a.inboxPath(c, title, explicitTitle)
 			v = append(v, input)
 		}
-		return a.create(cmd.Context(), c, v[0], template, title, explicitTitle, noOpen, openExisting)
+		return a.create(cmd.Context(), c, v[0], template, title, explicitTitle, noOpen, openExisting, cite)
 	}
 	newCmd.RegisterFlagCompletionFunc("template", a.completeTemplates)
+	newCmd.RegisterFlagCompletionFunc("cite", a.completeCitekeys)
 	tmpl := &cobra.Command{Use: "templates", Short: "List templates, sources, overrides, and the default", Args: args(0, 0), RunE: func(_ *cobra.Command, _ []string) error {
 		c, e := a.load()
 		if e != nil {
@@ -237,7 +259,7 @@ func New(o Options) *cobra.Command {
 		}
 		return syncgit.Run(cmd.Context(), c, syncgit.Options{In: a.In, Err: a.Err, Message: override})
 	}
-	root.AddCommand(initCmd, open, newCmd, tmpl, completion, preview, doctor, syncCmd)
+	root.AddCommand(initCmd, open, newCmd, tmpl, completion, preview, doctor, syncCmd, a.citeCommand())
 	root.AddCommand(a.updateCommand(), a.installCommand())
 	for _, kind := range []string{"find", "grep", "search", "recent"} {
 		root.AddCommand(a.resultCommand(kind))
@@ -392,7 +414,7 @@ func (a *app) inboxPath(c config.Config, title string, explicitTitle bool) (stri
 	}
 	return c.InboxDir + "/" + now.Format("2006-01-02-150405"), title, true
 }
-func (a *app) create(ctx context.Context, c config.Config, input, template, title string, explicitTitle, noOpen, authorized bool) error {
+func (a *app) create(ctx context.Context, c config.Config, input, template, title string, explicitTitle, noOpen, authorized bool, cite map[string]string) error {
 	rel, e := notes.NewPath(input)
 	if e != nil {
 		return e
@@ -413,8 +435,16 @@ func (a *app) create(ctx context.Context, c config.Config, input, template, titl
 	}
 	if !explicitTitle {
 		title = notes.Title(input)
+		if cite["title"] != "" {
+			title = cite["title"]
+		}
 	}
-	contents, e := templates.Render(src, map[string]string{"title": title, "slug": notes.WithoutMD(filepath.Base(rel)), "path": rel, "date": a.now().Format(time.DateOnly)})
+	values := map[string]string{"citekey": "", "authors": "", "year": "", "doi": "", "url": ""}
+	for k, v := range cite {
+		values[k] = v
+	}
+	values["title"], values["slug"], values["path"], values["date"] = title, notes.WithoutMD(filepath.Base(rel)), rel, a.now().Format(time.DateOnly)
+	contents, e := templates.Render(src, values)
 	if e != nil {
 		return e
 	}
@@ -531,7 +561,7 @@ func (a *app) lookup(ctx context.Context, c config.Config, q, scope string) erro
 	if scope != "" {
 		q = scope + "/" + q
 	}
-	return a.create(ctx, c, q, "", "", false, false, false)
+	return a.create(ctx, c, q, "", "", false, false, false, nil)
 }
 func (a *app) resultCommand(kind string) *cobra.Command {
 	use := kind + " QUERY"
@@ -756,6 +786,103 @@ func (a *app) completePaths(cmd *cobra.Command, args []string, prefix string) ([
 	}
 	sort.Strings(out)
 	return out, directive
+}
+
+func citekey(key string) error {
+	if key == "" || strings.IndexFunc(key, func(r rune) bool { return unicode.IsSpace(r) || unicode.IsControl(r) }) >= 0 {
+		return errs.New(2, "citation key must be nonempty without spaces or control characters")
+	}
+	return nil
+}
+func (a *app) bibliography(c config.Config) ([]bib.Entry, error) {
+	if c.Bibliography == "" {
+		return nil, errs.New(3, "no bibliography configured; set bibliography in %s", search.Visible(c.File))
+	}
+	return bib.Load(c.Bibliography)
+}
+func (a *app) citation(c config.Config, key string) (bib.Entry, error) {
+	entries, e := a.bibliography(c)
+	if e != nil {
+		return bib.Entry{}, e
+	}
+	entry, ok := bib.Find(entries, key)
+	if !ok {
+		return bib.Entry{}, errs.New(1, "no bibliography entry with key %s", search.Visible(key))
+	}
+	return entry, nil
+}
+
+// citeCommand opens or creates the literature note for a bibliography entry.
+func (a *app) citeCommand() *cobra.Command {
+	cmd := &cobra.Command{Use: "cite [KEY]", Short: "Open or create the literature note for a bibliography entry", Args: args(0, 1), ValidArgsFunction: a.completeCitekeys}
+	var template string
+	var noOpen bool
+	cmd.Flags().StringVar(&template, "template", "paper", "Template for a new literature note")
+	cmd.Flags().BoolVar(&noOpen, "no-open", false, "Create without opening an editor")
+	cmd.RegisterFlagCompletionFunc("template", a.completeTemplates)
+	cmd.RunE = func(cmd *cobra.Command, v []string) error {
+		if !config.Identifier(template) {
+			return errs.New(2, "invalid template identifier")
+		}
+		if len(v) > 0 {
+			if e := citekey(v[0]); e != nil {
+				return e
+			}
+		}
+		c, e := a.load()
+		if e != nil {
+			return e
+		}
+		var entry bib.Entry
+		if len(v) > 0 {
+			if entry, e = a.citation(c, v[0]); e != nil {
+				return e
+			}
+		} else {
+			if !a.Interactive() {
+				return errs.New(2, "citation picker needs an interactive terminal; use note cite KEY")
+			}
+			entries, e := a.bibliography(c)
+			if e != nil {
+				return e
+			}
+			displays := make([]string, len(entries))
+			for i, x := range entries {
+				values := x.Values()
+				displays[i] = search.Visible(fmt.Sprintf("%s  %s  %s  %s", x.Key, values["year"], truncate(values["authors"], 40), values["title"]))
+			}
+			n, e := picker.Choose(cmd.Context(), c, displays, a.Err)
+			if e != nil {
+				return e
+			}
+			entry = entries[n]
+		}
+		return a.create(cmd.Context(), c, c.LiteratureDir+"/"+entry.Key, template, "", false, noOpen, true, entry.Values())
+	}
+	return cmd
+}
+func truncate(s string, n int) string {
+	if r := []rune(s); len(r) > n {
+		return string(r[:n-1]) + "…"
+	}
+	return s
+}
+func (a *app) completeCitekeys(_ *cobra.Command, args []string, prefix string) ([]string, cobra.ShellCompDirective) {
+	out := []string{}
+	c, e := a.paths(true).Load(a.configPath)
+	if len(args) > 0 || e != nil || c.Bibliography == "" {
+		return out, cobra.ShellCompDirectiveNoFileComp
+	}
+	entries, e := bib.Load(c.Bibliography)
+	if e != nil {
+		return out, cobra.ShellCompDirectiveNoFileComp
+	}
+	for _, x := range entries {
+		if strings.HasPrefix(x.Key, prefix) && citekey(x.Key) == nil {
+			out = append(out, x.Key)
+		}
+	}
+	return out, cobra.ShellCompDirectiveNoFileComp
 }
 
 // completeDirs offers only the directory candidates of path completion.

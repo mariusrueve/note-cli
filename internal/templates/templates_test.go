@@ -9,7 +9,7 @@ import (
 
 func TestTemplates(t *testing.T) {
 	dir := t.TempDir()
-	values := map[string]string{"title": "ECFP 日本語 {{slug}}", "slug": "ecfp", "path": "chem/ecfp.md", "date": "2026-10-12"}
+	values := map[string]string{"title": "ECFP 日本語 {{slug}}", "slug": "ecfp", "path": "chem/ecfp.md", "date": "2026-10-12", "citekey": "rogers2010", "authors": "David Rogers", "year": "2010", "doi": "10.1/x", "url": "https://example.org"}
 	list, e := List(dir)
 	if e != nil || len(list) != 8 {
 		t.Fatal(list, e)
@@ -25,6 +25,9 @@ func TestTemplates(t *testing.T) {
 		}
 		if strings.Contains(got, "---") {
 			t.Fatal("frontmatter")
+		}
+		if i.Name == "paper" && !strings.Contains(got, "- Key: rogers2010\n- Authors: David Rogers\n- Year: 2010\n- DOI: 10.1/x\n") {
+			t.Fatalf("paper: %q", got)
 		}
 		if i.Name == "empty" && got != "" {
 			t.Fatalf("empty template: %q", got)

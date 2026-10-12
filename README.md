@@ -52,6 +52,7 @@ note new docker/networking
 note new --title "Idea about ECFP"  # no path needed: inbox/idea-about-ecfp.md
 note new cheminformatics/ecfp --template concept --title ECFP
 note new phd/lab/binding-assay --template experiment  # also paper, meeting, idea
+note cite                  # pick a Zotero/BibTeX entry; open or create its literature note
 note open docker/networking
 note                       # fzf with a right-side source preview
 note docker                # convenient lookup; offers confirmed creation

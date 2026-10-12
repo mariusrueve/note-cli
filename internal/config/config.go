@@ -35,6 +35,8 @@ type Config struct {
 	DefaultTemplate string   `toml:"default_template"`
 	TemplatesDir    string   `toml:"templates_dir"`
 	InboxDir        string   `toml:"inbox_dir"`
+	Bibliography    string   `toml:"bibliography"`
+	LiteratureDir   string   `toml:"literature_dir"`
 	Tools           Tools    `toml:"tools"`
 	Finder          Finder   `toml:"finder"`
 	Search          Search   `toml:"search"`
@@ -48,6 +50,8 @@ type disk struct {
 	DefaultTemplate *string `toml:"default_template"`
 	TemplatesDir    *string `toml:"templates_dir"`
 	InboxDir        *string `toml:"inbox_dir"`
+	Bibliography    *string `toml:"bibliography"`
+	LiteratureDir   *string `toml:"literature_dir"`
 	Tools           struct {
 		FZF *[]string `toml:"fzf"`
 		RG  *[]string `toml:"rg"`
@@ -128,7 +132,7 @@ func (p Paths) Load(override string) (Config, error) {
 	if e != nil {
 		return c, e
 	}
-	c = Config{SchemaVersion: 1, Editor: []string{"hx"}, DefaultTemplate: "default", TemplatesDir: filepath.Join(base, "templates"), InboxDir: "inbox", Tools: Tools{[]string{"fzf"}, []string{"rg"}, []string{"git"}}, Finder: Finder{"90%", "right:60%:wrap"}, Sync: Sync{"notes: sync {timestamp}"}, File: f, Search: d.Search}
+	c = Config{SchemaVersion: 1, Editor: []string{"hx"}, DefaultTemplate: "default", TemplatesDir: filepath.Join(base, "templates"), InboxDir: "inbox", LiteratureDir: "literature", Tools: Tools{[]string{"fzf"}, []string{"rg"}, []string{"git"}}, Finder: Finder{"90%", "right:60%:wrap"}, Sync: Sync{"notes: sync {timestamp}"}, File: f, Search: d.Search}
 	if d.SchemaVersion != nil {
 		c.SchemaVersion = *d.SchemaVersion
 	}
@@ -180,8 +184,22 @@ func (p Paths) Load(override string) (Config, error) {
 	if d.InboxDir != nil {
 		c.InboxDir = strings.TrimSuffix(*d.InboxDir, "/")
 	}
-	if notes.Syntax(c.InboxDir, true) != nil {
-		return c, fmt.Errorf("inbox_dir must be a root-relative directory without .., .git, or control characters")
+	if d.LiteratureDir != nil {
+		c.LiteratureDir = strings.TrimSuffix(*d.LiteratureDir, "/")
+	}
+	for name, dir := range map[string]string{"inbox_dir": c.InboxDir, "literature_dir": c.LiteratureDir} {
+		if notes.Syntax(dir, true) != nil {
+			return c, fmt.Errorf("%s must be a root-relative directory without .., .git, or control characters", name)
+		}
+	}
+	if d.Bibliography != nil {
+		if *d.Bibliography == "" {
+			return c, fmt.Errorf("bibliography cannot be empty; omit it instead")
+		}
+		c.Bibliography, e = p.Expand(*d.Bibliography, filepath.Dir(f))
+		if e != nil {
+			return c, e
+		}
 	}
 	if d.Tools.FZF != nil {
 		c.Tools.FZF = *d.Tools.FZF

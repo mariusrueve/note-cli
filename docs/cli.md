@@ -11,7 +11,8 @@ additional filtering in fzf is fuzzy.
 | `note` / `note open` | Pick from discovered Markdown notes; `--in DIR` |
 | `note QUERY` | Exact existing path (optional `.md`), exact discoverable basename/stem, then relative-path substring; one opens, multiple pick, none offers creation; `--in DIR` |
 | `note open PATH` | Literal existing root-relative filename, optional `.md`; supports ignored notes and preserves legacy spelling |
-| `note new [PATH]` | Normalize basename, create exclusively, open; without PATH, create in `inbox_dir`; `--template NAME`, `--title TITLE`, `--no-open`, `--open-existing` |
+| `note new [PATH]` | Normalize basename, create exclusively, open; without PATH, create in `inbox_dir`; `--template NAME`, `--title TITLE`, `--no-open`, `--open-existing`, `--cite KEY` |
+| `note cite [KEY]` | Open or create `literature_dir/<key>.md` for a bibliography entry; fzf picker without KEY; `--template NAME` (`paper`), `--no-open` |
 | `note find QUERY` | Paths only; `--case-sensitive`, `--print`, `--json`, `--in DIR` |
 | `note grep QUERY` | Contents only, one result per matching line; same options |
 | `note search QUERY` | Path/content union, one result per note with first content line; same options |
@@ -32,6 +33,16 @@ title has no ASCII letters or digits, the basename is the local time
 `YYYY-MM-DD-HHMMSS`; an untitled note's heading is `YYYY-MM-DD HH:MM:SS`. All
 existing-note rules apply unchanged (a same-second repeat returns 4 headlessly).
 File notes later with `mv` or `git mv`.
+
+`note cite KEY` reads the configured `bibliography` (exit 3 when unset or
+unreadable, exit 1 for an unknown key; keys are exact and case-sensitive). The
+note path is `literature_dir/KEY` with the usual basename normalization, so
+`smithDeepLearning2024` becomes `smithdeeplearning2024.md`; the exact key is
+available as `{{citekey}}`. An existing note opens without a prompt and is never
+retemplated; with `--no-open` it returns 4. Without KEY, a terminal shows an fzf
+picker of key, year, authors, and title; headless use exits 2. Completion offers
+keys. `note new PATH --cite KEY` fills any template from the entry (default
+template `paper`); without PATH it uses `literature_dir/KEY`.
 
 Backlinks and deadlinks read ordinary Markdown links at invocation time; there is
 no index and nothing is rewritten. They recognize inline links and images

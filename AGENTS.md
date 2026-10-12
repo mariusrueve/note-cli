@@ -30,6 +30,7 @@ conflict. Routine internal choices are welcome. Keep responsibilities small and 
 - `internal/notes`: root containment, symlink checks, basename slugging, exclusive create.
 - `internal/templates`: embedded `defaults/*.md`, user templates, fixed placeholders.
 - `internal/search`: rg discovery, path/content matching, ordering, JSON records.
+- `internal/bib`: read-only BibTeX/BibLaTeX parsing and citation placeholder values.
 - `internal/links`: Markdown link extraction for backlinks and deadlinks (no index).
 - `internal/picker`: fzf manifest, numeric IDs, hidden preview helper.
 - `internal/process`: direct argv execution, process groups, cancellation.

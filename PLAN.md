@@ -81,16 +81,16 @@ Ordered by value and effort; implement one item per change.
 
 ### 5. Zotero / Better BibTeX citations
 
-- [ ] Config `bibliography` (path to a Better BibTeX auto-exported `.bib` file)
+- [x] Config `bibliography` (path to a Better BibTeX auto-exported `.bib` file)
   and `literature_dir` (default `"literature"`).
-- [ ] Minimal read-only BibTeX reader in `internal/bib` (braced and quoted values,
-  `@string`-free entries are sufficient); the `.bib` file is never modified.
-- [ ] `note cite`: fzf over entries; selecting opens `<literature_dir>/<citekey>.md`
-  or creates it from the `paper` template. `note new PATH --cite KEY` fills a
-  template from one entry.
-- [ ] Placeholders `{{citekey}}`, `{{authors}}`, `{{year}}`, `{{doi}}`, `{{url}}`;
+- [x] Minimal read-only BibTeX/BibLaTeX reader in `internal/bib` (braced, quoted,
+  and bare values, `#` concatenation, LaTeX accents); the `.bib` file is never modified.
+- [x] `note cite [KEY]`: fzf over entries without KEY; opens
+  `<literature_dir>/<slug(citekey)>.md` or creates it from the `paper` template.
+  `note new [PATH] --cite KEY` fills any template from one entry.
+- [x] Placeholders `{{citekey}}`, `{{authors}}`, `{{year}}`, `{{doi}}`, `{{url}}`;
   `{{title}}` comes from the entry unless `--title` is given. Empty when absent.
-- [ ] Document in `docs/templates.md`, `docs/configuration.md`, and `docs/cli.md`.
+- [x] Documented in `docs/templates.md`, `docs/configuration.md`, and `docs/cli.md`.
 
 ## Later extensions
 

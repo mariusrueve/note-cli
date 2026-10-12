@@ -31,6 +31,11 @@ line scanner (inline links/images, reference definitions, fenced code, inline co
 spans), not a general Markdown parser, and keeps no index. Dead-link checks walk
 targets without following symlinks and compare exact directory-entry names.
 
+`internal/bib` reads BibTeX/BibLaTeX files read-only: braced, quoted, and bare
+values with `#` concatenation, skipping `@comment`/`@string`/`@preamble`. It turns
+titles and names into plain text for fixed template placeholders. String macros
+are not expanded; bibliography managers such as Better BibTeX do not need them.
+
 `internal/syncgit` handles dedicated-repository preflight, advisory locking,
 commit-first fetch/rebase, collision protection, and explicit upstream push.
 Recovery is Git's commits/index/operation state; there is no stash journal.

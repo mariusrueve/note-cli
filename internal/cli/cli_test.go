@@ -368,3 +368,67 @@ func TestBacklinksAndDeadlinks(t *testing.T) {
 		t.Fatalf("%d %q", code, out)
 	}
 }
+func TestCitations(t *testing.T) {
+	f := setup(t)
+	bibFile := filepath.Join(t.TempDir(), "My Library.bib")
+	source := "@article{rogersExtendedConnectivity2010,\n  title = {Extended-{{Connectivity Fingerprints}}},\n  author = {Rogers, David and Hahn, Mathew},\n  date = {2010-05-24},\n  doi = {10.1021/ci100050t},\n  url = {https://example.org/ecfp}\n}\n@online{noAscii, title = {日本語}}\n"
+	os.WriteFile(bibFile, []byte(source), 0400)
+	// Without a configured bibliography, citing is a configuration error.
+	if code, _, _ := execute(t, f, false, "", "cite", "rogersExtendedConnectivity2010"); code != 3 {
+		t.Fatal(code)
+	}
+	b, _ := json.Marshal(bibFile)
+	os.WriteFile(f.cfg, []byte(fmtConfig(f.root, f.editor)+"bibliography = "+string(b)+"\n"), 0600)
+	code, _, notice := execute(t, f, false, "", "cite", "rogersExtendedConnectivity2010", "--no-open")
+	if code != 0 || !strings.Contains(notice, "Created literature/rogersextendedconnectivity2010.md") {
+		t.Fatal(code, notice)
+	}
+	p := filepath.Join(f.root, "literature", "rogersextendedconnectivity2010.md")
+	got, _ := os.ReadFile(p)
+	want := "# Extended-Connectivity Fingerprints\n\n## Citation\n\n- Key: rogersExtendedConnectivity2010\n- Authors: David Rogers, Mathew Hahn\n- Year: 2010\n- DOI: 10.1021/ci100050t\n- URL: https://example.org/ecfp\n\n## Summary\n"
+	if !strings.HasPrefix(string(got), want) {
+		t.Fatalf("%q", got)
+	}
+	// An existing literature note opens without a prompt and is never rewritten.
+	os.WriteFile(p, []byte("my notes\n"), 0600)
+	if code, _, _ = execute(t, f, false, "", "cite", "rogersExtendedConnectivity2010"); code != 0 {
+		t.Fatal(code)
+	}
+	if got, _ = os.ReadFile(p); string(got) != "my notes\n" {
+		t.Fatalf("%q", got)
+	}
+	argvData, _ := os.ReadFile(f.record)
+	if !strings.Contains(string(argvData), p) {
+		t.Fatal(string(argvData))
+	}
+	if code, _, _ = execute(t, f, false, "", "cite", "rogersExtendedConnectivity2010", "--no-open"); code != 4 {
+		t.Fatal(code)
+	}
+	// note new --cite fills any template at any path; --title still wins.
+	code, _, _ = execute(t, f, false, "", "new", "phd/reading/ecfp", "--cite", "rogersExtendedConnectivity2010", "--template", "default", "--title", "ECFP", "--no-open")
+	if got, _ = os.ReadFile(filepath.Join(f.root, "phd", "reading", "ecfp.md")); code != 0 || string(got) != "# ECFP\n\n" {
+		t.Fatalf("%d %q", code, got)
+	}
+	// Without a citation, citation placeholders render empty.
+	execute(t, f, false, "", "new", "blank-paper", "--template", "paper", "--no-open")
+	if got, _ = os.ReadFile(filepath.Join(f.root, "blank-paper.md")); !strings.Contains(string(got), "- Key: \n- Authors: \n") {
+		t.Fatalf("%q", got)
+	}
+	for args, want := range map[string]int{"cite missingKey": 1, "cite": 2, "cite bad\tkey": 2, "new --cite missingKey --no-open": 1, "cite rogersExtendedConnectivity2010 --template=../x": 2} {
+		if code, _, _ := execute(t, f, false, "", strings.Split(args, " ")...); code != want {
+			t.Fatal(args, code, want)
+		}
+	}
+	// Unicode titles are kept in the heading; the basename comes from the key.
+	execute(t, f, false, "", "cite", "noAscii", "--no-open")
+	if got, _ = os.ReadFile(filepath.Join(f.root, "literature", "noascii.md")); !strings.HasPrefix(string(got), "# 日本語\n") {
+		t.Fatalf("%q", got)
+	}
+	code, out, _ := execute(t, f, false, "", "__complete", "cite", "rogers")
+	if code != 0 || !strings.Contains(out, "rogersExtendedConnectivity2010") || strings.Contains(out, "noAscii") {
+		t.Fatal(code, out)
+	}
+	if after, _ := os.ReadFile(bibFile); string(after) != source {
+		t.Fatal("bibliography modified")
+	}
+}
