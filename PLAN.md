@@ -1,8 +1,7 @@
 # PLAN.md — `note` roadmap
 
-Status: v0.2.0 is published and verified, covering roadmap items 1–5. Items 6–8
-are implemented and prepared as 0.3.0 (see [verification](docs/verification.md)).
-Updated: 2026-10-13.
+Status: v0.3.0 is published and verified, covering roadmap items 1–8 (see
+[verification](docs/verification.md)). Updated: 2026-10-13.
 
 The original v1 build specification is archived in
 [docs/history/v1-spec.md](docs/history/v1-spec.md). Current public contracts live

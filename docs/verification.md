@@ -11,6 +11,14 @@ Version 0.3.0 preparation on 2026-10-13, macOS ARM64, Go 1.27.2:
 - Local `check`, `-e go126 check`, `security` (no vulnerabilities found), and
   `lint-workflows` passed; a clean `release --version 0.3.0` build passed
   `verify-release`.
+- Public release verification completed on 2026-10-13: [main CI](https://github.com/mariusrueve/note-cli/actions/runs/38368548340)
+  passed for release commit `d3a8361eb3edd860cf9a932614c3e3544b39d742`, and the
+  [tag-triggered release run](https://github.com/mariusrueve/note-cli/actions/runs/38368565135)
+  revalidated and published [v0.3.0](https://github.com/mariusrueve/note-cli/releases/tag/v0.3.0)
+  with four archives, `checksums.txt`, `install.sh`, and `build-info.json`. The
+  public installer, downloaded without authentication, installed 0.3.0 with a
+  verified checksum, and `note self-update` updated a real 0.2.0 release
+  installation to 0.3.0 on macOS ARM64.
 - Read-only smoke test against the real 116-entry Better BibTeX export in a
   temporary root: every entry created a note, 104 with a venue and none with
   leftover LaTeX; the bibliography checksum was unchanged. `note move` on
