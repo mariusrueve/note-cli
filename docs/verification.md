@@ -3,6 +3,19 @@
 Implementation and local checks performed on 2026-10-06, macOS ARM64.
 This records executed local checks and native GitHub Actions results.
 
+Version 0.3.0 preparation on 2026-10-13, macOS ARM64, Go 1.27.2:
+
+- `{{venue}}`/`{{abstract}}`, the cite picker marker and preview, and `note move`
+  are covered by unit, CLI, and real-fzf PTY tests (the cite case waits for the
+  abstract in the live preview pane and for the `✓` marker).
+- Local `check`, `-e go126 check`, `security` (no vulnerabilities found), and
+  `lint-workflows` passed; a clean `release --version 0.3.0` build passed
+  `verify-release`.
+- Read-only smoke test against the real 116-entry Better BibTeX export in a
+  temporary root: every entry created a note, 104 with a venue and none with
+  leftover LaTeX; the bibliography checksum was unchanged. `note move` on
+  synthetic notes rewrote inbound and outbound links, and `note deadlinks` was clean.
+
 Version 0.2.0 preparation on 2026-10-12, macOS ARM64, Go 1.27.2:
 
 - Research templates, `--in DIR`, inbox capture, backlinks/deadlinks, and

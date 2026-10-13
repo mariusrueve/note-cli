@@ -1,6 +1,6 @@
 [workspace]
 name = "note-cli"
-version = "0.2.0"
+version = "0.3.0"
 description = "A small, safe Markdown knowledge-base CLI"
 channels = ["conda-forge"]
 platforms = [

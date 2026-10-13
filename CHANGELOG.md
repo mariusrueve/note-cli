@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## [0.3.0] - 2026-10-13
+
 - Add `note move OLD NEW` (with `--dry-run` and `--json`) to move a note without
   overwriting and update relative links to and from it.
 - The `note cite` picker marks entries that already have a literature note and
